@@ -3,9 +3,9 @@ prog drop _all
 capture log close
 set more off
 
-log using "/Users/xiangyuren/Documents/AEM 2172/replication exercise.log", replace
-use "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta", clear 
-cd "/Users/xiangyuren/Documents/AEM 2172/"
+log using "/Users/replication exercise.log", replace
+use "/Users/raw pums80 slim.dta", clear 
+cd "/Users"
 
 /*Preparation of data*/
 *generate mom sample*
