@@ -1,0 +1,2276 @@
+-----------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/xiangyuren/Documents/AEM 2172/replication exercise.log
+  log type:  text
+ opened on:  15 Dec 2021, 23:25:07
+
+. use "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta", clear 
+
+. cd "/Users/xiangyuren/Documents/"
+/Users/xiangyuren/Documents
+
+. 
+. /*Preparation of data*/
+. *generate mom sample*
+. gen mom=.
+(11,343,120 missing values generated)
+
+. replace mom=1 if (us80a_chborn>=3 & us80a_nchild==us80a_chborn-1 & age<=35 & age>=21 & sex==2)
+(478,514 real changes made)
+
+. replace mom=0 if mom==.
+(10,864,606 real changes made)
+
+. keep if mom==1
+(10,864,606 observations deleted)
+
+. save mother, replace
+file mother.dta saved
+
+. 
+. *merge mom sample to main sample*
+. keep us80a_pernum us80a_serial
+
+. rename us80a_pernum momloc
+
+. merge 1:m us80a_serial momloc using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta"
+(note: variable momloc was byte, now int to accommodate using data's values)
+(label us80a_qwksworklbl already defined)
+(label us80a_quhrsworlbl already defined)
+(label us80a_qsexlbl already defined)
+(label us80a_qincwagelbl already defined)
+(label us80a_qincbuslbl already defined)
+(label us80a_qeduclbl already defined)
+(label us80a_qchbornlbl already defined)
+(label us80a_qbpllbl already defined)
+(label us80a_qbirthmolbl already defined)
+(label us80a_qagelbl already defined)
+(label us80a_birthqtrlbl already defined)
+(label us80a_widowlbl already defined)
+(label us80a_uhrsworklbl already defined)
+(label us80a_wkswork1lbl already defined)
+(label us80a_classwkrlbl already defined)
+(label us80a_higradelbl already defined)
+(label us80a_schoollbl already defined)
+(label us80a_hispanlbl already defined)
+(label us80a_bpllbl already defined)
+(label us80a_marrqtrlbl already defined)
+(label us80a_chbornlbl already defined)
+(label us80a_marrnolbl already defined)
+(label us80a_agemarrlbl already defined)
+(label us80a_marstlbl already defined)
+(label us80a_racelbl already defined)
+(label us80a_sexlbl already defined)
+(label us80a_agelbl already defined)
+(label us80a_nchildlbl already defined)
+(label us80a_sploclbl already defined)
+(label us80a_momrulelbl already defined)
+(label us80a_momloclbl already defined)
+(label us80a_pernumlbl already defined)
+(label educuslbl already defined)
+(label yrschllbl already defined)
+(label edattandlbl already defined)
+(label edattanlbl already defined)
+(label schoollbl already defined)
+(label hispanlbl already defined)
+(label racelbl already defined)
+(label agemarrlbl already defined)
+(label sexlbl already defined)
+(label agelbl already defined)
+(label parrulelbl already defined)
+(label us80a_statefiplbl already defined)
+(label stateuslbl already defined)
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                    10,147,933
+        from master                       418  (_merge==1)
+        from using                 10,147,515  (_merge==2)
+
+    matched                         1,195,605  (_merge==3)
+    -----------------------------------------
+
+. keep if _merge==3
+(10,147,933 observations deleted)
+
+. 
+. *generate children sample*
+. keep age sex us80a_serial momloc us80a_birthqtr us80a_qage us80a_qsex us80a_qbirthmo
+
+. gsort us80a_serial -age
+
+. bys us80a_serial: gen childrennumber=_n 
+
+. reshape wide age sex us80a_birthqtr us80a_qage us80a_qsex us80a_qbirthmo, i(momloc us80a_serial) j(childr
+> ennumber)
+(note: j = 1 2 3 4 5 6 7 8 9 10 11)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                  1.2e+06   ->  478096
+Number of variables                   9   ->      68
+j variable (11 values)   childrennumber   ->   (dropped)
+xij variables:
+                                    age   ->   age1 age2 ... age11
+                                    sex   ->   sex1 sex2 ... sex11
+                         us80a_birthqtr   ->   us80a_birthqtr1 us80a_birthqtr2 ... us80a_birthqtr11
+                             us80a_qage   ->   us80a_qage1 us80a_qage2 ... us80a_qage11
+                             us80a_qsex   ->   us80a_qsex1 us80a_qsex2 ... us80a_qsex11
+                         us80a_qbirthmo   ->   us80a_qbirthmo1 us80a_qbirthmo2 ... us80a_qbirthmo11
+-----------------------------------------------------------------------------
+
+. keep us80a_serial momloc age1 sex1 us80a_birthqtr1 us80a_qage1 us80a_qsex1 us80a_qbirthmo1 age2 sex2 us80
+> a_birthqtr2 us80a_qage2 us80a_qsex2 us80a_qbirthmo2 age3 sex3 us80a_birthqtr3 
+
+. drop if age1>=18 | age2<1 
+(50,067 observations deleted)
+
+. drop if age2==. | sex2==. 
+(288 observations deleted)
+
+. rename momloc us80a_pernum
+
+. save children, replace
+file children.dta saved
+
+. 
+. *merge children sample to mom sample*
+. merge 1:m us80a_serial us80a_pernum using "mother.dta"
+(label agelbl already defined)
+(label sexlbl already defined)
+(label us80a_pernumlbl already defined)
+(label us80a_birthqtrlbl already defined)
+(label us80a_qagelbl already defined)
+(label us80a_qbirthmolbl already defined)
+(label us80a_qsexlbl already defined)
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                        50,773
+        from master                         0  (_merge==1)
+        from using                     50,773  (_merge==2)
+
+    matched                           427,741  (_merge==3)
+    -----------------------------------------
+
+. keep if _merge==3 & us80a_qage1==0 & us80a_qage2==0 & us80a_qsex1==0 & us80a_qsex2==0 & us80a_qbirthmo1==
+> 0 & us80a_qbirthmo2==0
+(85,589 observations deleted)
+
+. save subsample, replace
+file subsample.dta saved
+
+. 
+. *generate covariates*
+. gen chborn=us80a_chborn-1
+
+. 
+. gen birthqtr1=0 if us80a_birthqtr1==1
+(296,749 missing values generated)
+
+. replace birthqtr1=0.25 if us80a_birthqtr1==2
+(93,881 real changes made)
+
+. replace birthqtr1=0.5 if us80a_birthqtr1==3
+(104,126 real changes made)
+
+. replace birthqtr1=0.75 if us80a_birthqtr1==4
+(98,742 real changes made)
+
+. 
+. gen marrqtr=0 if us80a_marrqtr==1
+(318,894 missing values generated)
+
+. replace marrqtr=0.25 if us80a_marrqtr==2
+(109,312 real changes made)
+
+. replace marrqtr=0.5 if us80a_marrqtr==3
+(109,479 real changes made)
+
+. replace marrqtr=0.75 if us80a_marrqtr==4
+(88,123 real changes made)
+
+. 
+. gen children2more=1 if (us80a_nchild>=3)
+(235,720 missing values generated)
+
+. replace children2more=0 if (us80a_nchild<3)
+(235,720 real changes made)
+
+. 
+. gen boy1st=.
+(392,925 missing values generated)
+
+. replace boy1st=1 if sex1==1
+(200,875 real changes made)
+
+. replace boy1st=0 if boy1st==.
+(192,050 real changes made)
+
+. 
+. gen boy2nd=.
+(392,925 missing values generated)
+
+. replace boy2nd=1 if sex2==1
+(200,826 real changes made)
+
+. replace boy2nd=0 if boy2nd==.
+(192,099 real changes made)
+
+. 
+. gen twoboys=.
+(392,925 missing values generated)
+
+. replace twoboys=1 if (sex1==1 & sex2==1)
+(103,789 real changes made)
+
+. replace twoboys=0 if twoboys==.
+(289,136 real changes made)
+
+. 
+. gen twogirls=.
+(392,925 missing values generated)
+
+. replace twogirls=1 if (sex1==2 & sex2==2)
+(95,013 real changes made)
+
+. replace twogirls=0 if twogirls==.
+(297,912 real changes made)
+
+. 
+. gen samesex=.
+(392,925 missing values generated)
+
+. replace samesex=1 if (sex1==sex2)
+(198,802 real changes made)
+
+. replace samesex=0 if samesex==.
+(194,123 real changes made)
+
+. 
+. gen twin=.
+(392,925 missing values generated)
+
+. replace twin=1 if (age2==age3 & us80a_birthqtr2==us80a_birthqtr3)
+(3,478 real changes made)
+
+. replace twin=0 if twin==.
+(389,447 real changes made)
+
+. 
+. gen workedforpay=.
+(392,925 missing values generated)
+
+. replace workedforpay=1 if us80a_wkswork1>0
+(220,847 real changes made)
+
+. replace workedforpay=0 if workedforpay==.
+(172,078 real changes made)
+
+. 
+. 
+. gen inflated_incwage=(us80a_incwage*2.099173554) 
+
+. gen inflated_ftotinc=(us80a_ftotinc*2.099173554)
+
+. gen nonwifeincome= us80a_ftotinc-us80a_incwage
+
+. gen inflated_nonwifeinc=(nonwifeincome*2.099173554)
+
+. gen agefirstbirth=age-age1
+
+. 
+. replace inflated_incwage=0 if inflated_incwage==.
+(0 real changes made)
+
+. replace inflated_ftotinc=0 if inflated_ftotinc==.
+(0 real changes made)
+
+. replace inflated_nonwifeinc=0 if inflated_nonwifeinc==.
+(0 real changes made)
+
+. 
+. gen black=1 if us80a_race==3
+(344,309 missing values generated)
+
+. replace black=0 if black==.
+(344,309 real changes made)
+
+. 
+. gen otherrace=1 if us80a_race !=1 & us80a_race!=2 & us80a_race!=3
+(381,558 missing values generated)
+
+. replace otherrace=0 if otherrace==.
+(381,558 real changes made)
+
+. 
+. gen hispanic=1 if us80a_race==2
+(380,927 missing values generated)
+
+. replace hispanic=0 if hispanic==.
+(380,927 real changes made)
+
+. save replication, replace
+file replication.dta saved
+
+. 
+. /*Part I*/
+. /*table 2 mean first column all women*/
+. mean chborn children2more boy1st boy2nd twoboys twogirls samesex twin age agefirstbirth workedforpay us80
+> a_wkswork1 us80a_uhrswork inflated_incwage inflated_ftotinc
+
+Mean estimation                       Number of obs   =    392,925
+
+------------------------------------------------------------------
+                 |       Mean   Std. Err.     [95% Conf. Interval]
+-----------------+------------------------------------------------
+          chborn |   2.553151   .0012988      2.550606    2.555697
+   children2more |   .4000891   .0007816      .3985572    .4016209
+          boy1st |   .5112299   .0007975      .5096669    .5127929
+          boy2nd |   .5111052   .0007975      .5095422    .5126682
+         twoboys |   .2641446   .0007033       .262766    .2655231
+        twogirls |   .2418095   .0006831      .2404707    .2431483
+         samesex |   .5059541   .0007976      .5043908    .5075173
+            twin |   .0088516   .0001494      .0085587    .0091444
+             age |   29.98267   .0057068      29.97149    29.99386
+   agefirstbirth |   20.95566   .0048853      20.94609    20.96524
+    workedforpay |   .5620589   .0007915      .5605076    .5636102
+  us80a_wkswork1 |   20.59049   .0354451      20.52102    20.65996
+  us80a_uhrswork |   18.69738   .0301918       18.6382    18.75655
+inflated_incwage |   6838.016   16.65628      6805.371    6870.662
+inflated_ftotinc |   41994.68   42.27507      41911.82    42077.54
+------------------------------------------------------------------
+
+. outreg2 using table2, excel stats(mean se) ctitle(All Women) replace
+table2.xml
+dir : seeout
+
+. /*table 6 OLS regression for all women*/
+. reg children2more samesex, r
+
+Linear regression                               Number of obs     =    392,925
+                                                F(1, 392923)      =    1411.05
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0036
+                                                Root MSE          =     .48904
+
+------------------------------------------------------------------------------
+             |               Robust
+children2m~e |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     samesex |   .0585996     .00156    37.56   0.000      .055542    .0616571
+       _cons |   .3704404   .0010961   337.97   0.000     .3682921    .3725887
+------------------------------------------------------------------------------
+
+. outreg2 using table6, excel ctitle(OLS_More than 2 children) replace
+table6.xml
+dir : seeout
+
+. reg children2more boy1st boy2nd samesex age agefirstbirth black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    392,925
+                                                F(8, 392916)      =    5997.29
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0946
+                                                Root MSE          =     .46616
+
+-------------------------------------------------------------------------------
+              |               Robust
+children2more |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+       boy1st |   -.008472   .0014879    -5.69   0.000    -.0113883   -.0055557
+       boy2nd |   -.007972    .001488    -5.36   0.000    -.0108884   -.0050557
+      samesex |   .0599668   .0014878    40.31   0.000     .0570508    .0628828
+          age |   .0322324   .0002234   144.28   0.000     .0317946    .0326703
+agefirstbirth |  -.0463691   .0002545  -182.22   0.000    -.0468678   -.0458703
+        black |   .0746157   .0023656    31.54   0.000     .0699792    .0792523
+    otherrace |   .0732214    .004426    16.54   0.000     .0645467    .0818962
+     hispanic |   .1575135   .0043373    36.32   0.000     .1490125    .1660145
+        _cons |   .3672757   .0069916    52.53   0.000     .3535724    .3809789
+-------------------------------------------------------------------------------
+
+. outreg2 using table6, excel keep(boy1st boy2nd samesex) ctitle(OLS_More than 2 children) append
+table6.xml
+dir : seeout
+
+. reg children2more boy1st twoboys twogirls age agefirstbirth black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    392,925
+                                                F(8, 392916)      =    5997.29
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0946
+                                                Root MSE          =     .46616
+
+-------------------------------------------------------------------------------
+              |               Robust
+children2more |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+       boy1st |     -.0005   .0020906    -0.24   0.811    -.0045975    .0035975
+      twoboys |   .0519948   .0020769    25.04   0.000     .0479242    .0560654
+     twogirls |   .0679388   .0021311    31.88   0.000     .0637619    .0721158
+          age |   .0322324   .0002234   144.28   0.000     .0317946    .0326703
+agefirstbirth |  -.0463691   .0002545  -182.22   0.000    -.0468678   -.0458703
+        black |   .0746157   .0023656    31.54   0.000     .0699792    .0792523
+    otherrace |   .0732214    .004426    16.54   0.000     .0645467    .0818962
+     hispanic |   .1575135   .0043373    36.32   0.000     .1490125    .1660145
+        _cons |   .3593037   .0069916    51.39   0.000     .3456004    .3730069
+-------------------------------------------------------------------------------
+
+. outreg2 using table6, excel keep(boy1st twoboys twogirls) ctitle(OLS_More than 2 children) append
+table6.xml
+dir : seeout
+
+. 
+. /*Table 7 instrumental variable for all wome */
+. *column 1*
+. reg workedforpay children2more age agefirstbirth boy1st boy2nd black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    392,925
+                                                F(8, 392916)      =    2953.38
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0527
+                                                Root MSE          =      .4829
+
+-------------------------------------------------------------------------------
+              |               Robust
+ workedforpay |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |   -.174832   .0016328  -107.08   0.000    -.1780323   -.1716318
+          age |   .0246584   .0002406   102.49   0.000     .0241868    .0251299
+agefirstbirth |  -.0285215   .0002906   -98.16   0.000    -.0290911    -.027952
+       boy1st |  -.0016433   .0015412    -1.07   0.286    -.0046641    .0013774
+       boy2nd |   -.004032   .0015413    -2.62   0.009    -.0070529   -.0010112
+        black |   .1006178   .0023359    43.07   0.000     .0960396    .1051961
+    otherrace |    .040224   .0046428     8.66   0.000     .0311243    .0493236
+     hispanic |  -.0332197   .0045863    -7.24   0.000    -.0422086   -.0242307
+        _cons |   .4806737   .0074797    64.26   0.000     .4660137    .4953337
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 1 worked for pay all women) replace
+table7.xml
+dir : seeout
+
+. reg us80a_wkswork1 children2more age agefirstbirth boy1st boy2nd black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    392,925
+                                                F(8, 392916)      =    4542.97
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0779
+                                                Root MSE          =     21.336
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_wkswo~1 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -8.844075   .0711228  -124.35   0.000    -8.983473   -8.704676
+          age |   1.501598   .0103969   144.43   0.000     1.481221    1.521976
+agefirstbirth |  -1.411975   .0128384  -109.98   0.000    -1.437138   -1.386812
+       boy1st |  -.1405113   .0681021    -2.06   0.039    -.2739894   -.0070332
+       boy2nd |  -.1828482   .0681043    -2.68   0.007    -.3163306   -.0493658
+        black |   6.146925   .1091158    56.33   0.000     5.933061    6.360789
+    otherrace |   2.740494   .2096739    13.07   0.000      2.32954    3.151449
+     hispanic |  -.8718655   .1936164    -4.50   0.000    -1.251348   -.4923831
+        _cons |   8.047935   .3151215    25.54   0.000     7.430307    8.665564
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 1 weeks worked all women) append
+table7.xml
+dir : seeout
+
+. reg  us80a_uhrswork children2more age agefirstbirth boy1st boy2nd black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    392,925
+                                                F(8, 392916)      =    3624.84
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0643
+                                                Root MSE          =     18.307
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_uhrsw~k |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -6.598657   .0616139  -107.10   0.000    -6.719418   -6.477895
+          age |   .9166965   .0092395    99.21   0.000     .8985873    .9348057
+agefirstbirth |  -1.334667   .0108845  -122.62   0.000    -1.356001   -1.313334
+       boy1st |  -.0940854    .058429    -1.61   0.107    -.2086045    .0204338
+       boy2nd |  -.1369187    .058436    -2.34   0.019    -.2514515   -.0223859
+        black |   5.361556   .0944906    56.74   0.000     5.176357    5.546754
+    otherrace |   3.816826   .1865521    20.46   0.000     3.451189    4.182462
+     hispanic |   .5349279   .1807271     2.96   0.003     .1807082    .8891476
+        _cons |   21.14921   .2825622    74.85   0.000      20.5954    21.70303
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 1 hours work per week all women) append
+table7.xml
+dir : seeout
+
+. reg inflated_incwage children2more age agefirstbirth boy1st boy2nd black otherrace hispanic,r
+
+Linear regression                               Number of obs     =    392,925
+                                                F(8, 392916)      =    3277.27
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0648
+                                                Root MSE          =      10097
+
+-------------------------------------------------------------------------------
+              |               Robust
+inflated_in~e |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -3645.873   33.58528  -108.56   0.000    -3711.699   -3580.047
+          age |    624.889   4.917089   127.09   0.000     615.2516    634.5263
+agefirstbirth |  -433.3163   6.532663   -66.33   0.000    -446.1201   -420.5124
+       boy1st |  -49.51644   32.23109    -1.54   0.124    -112.6884    13.65553
+       boy2nd |  -45.02371   32.22239    -1.40   0.162    -108.1786    18.13121
+        black |   3911.625   56.68366    69.01   0.000     3800.526    4022.723
+    otherrace |   2388.444   116.7126    20.46   0.000     2159.691    2617.197
+     hispanic |   336.5968   83.73313     4.02   0.000     172.4823    500.7112
+        _cons |  -1873.747    147.534   -12.70   0.000     -2162.91   -1584.585
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more)  ctitle(column 1 labor income all women) append
+table7.xml
+dir : seeout
+
+. gen lnfamilyinc=ln(inflated_ftotinc+1)
+(944 missing values generated)
+
+. reg lnfamilyinc children2more age agefirstbirth boy1st boy2nd black otherrace hispanic,r
+
+Linear regression                               Number of obs     =    391,981
+                                                F(8, 391972)      =    2601.38
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0740
+                                                Root MSE          =     1.2146
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnfamilyinc |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.1267549   .0042302   -29.96   0.000     -.135046   -.1184639
+          age |   .0464734   .0006486    71.65   0.000     .0452021    .0477447
+agefirstbirth |   .0296941   .0007092    41.87   0.000     .0283041    .0310842
+       boy1st |   .0021186   .0038823     0.55   0.585    -.0054906    .0097278
+       boy2nd |   .0064155   .0038837     1.65   0.099    -.0011963    .0140274
+        black |  -.6089152   .0081262   -74.93   0.000    -.6248423   -.5929881
+    otherrace |  -.2344454   .0151348   -15.49   0.000    -.2641091   -.2047816
+     hispanic |  -.5059307   .0153614   -32.94   0.000    -.5360387   -.4758228
+        _cons |    8.45855   .0198323   426.50   0.000      8.41968    8.497421
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 1 ln-family income all women) append
+table7.xml
+dir : seeout
+
+. 
+. *column 2*
+. ivregress 2sls workedforpay (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherr
+> ace, r
+
+Instrumental variables (2SLS) regression          Number of obs   =    392,925
+                                                  Wald chi2(8)    =   10886.27
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0506
+                                                  Root MSE        =     .48343
+
+-------------------------------------------------------------------------------
+              |               Robust
+ workedforpay |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.1261807   .0257346    -4.90   0.000    -.1766196   -.0757419
+          age |   .0230916   .0008617    26.80   0.000     .0214027    .0247805
+agefirstbirth |  -.0262673   .0012251   -21.44   0.000    -.0286684   -.0238663
+       boy1st |  -.0012945    .001554    -0.83   0.405    -.0043402    .0017513
+       boy2nd |  -.0037083   .0015525    -2.39   0.017    -.0067512   -.0006653
+     hispanic |  -.0408825    .006121    -6.68   0.000    -.0528793   -.0288856
+        black |   .0969807   .0030249    32.06   0.000     .0910519    .1029095
+    otherrace |   .0366782    .005007     7.33   0.000     .0268647    .0464917
+        _cons |   .4613885   .0126322    36.52   0.000     .4366298    .4861472
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 2 worked for pay all women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls us80a_wkswork1 (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black othe
+> rrace, r
+
+Instrumental variables (2SLS) regression          Number of obs   =    392,925
+                                                  Wald chi2(8)    =   18916.72
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0742
+                                                  Root MSE        =     21.378
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_wkswo~1 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -5.955569    1.13819    -5.23   0.000     -8.18638   -3.724758
+          age |   1.408577   .0380492    37.02   0.000     1.334002    1.483153
+agefirstbirth |  -1.278139   .0542009   -23.58   0.000     -1.38437   -1.171907
+       boy1st |  -.1197994   .0687128    -1.74   0.081    -.2544739    .0148751
+       boy2nd |  -.1636243   .0686584    -2.38   0.017    -.2981922   -.0290564
+     hispanic |  -1.326818   .2639399    -5.03   0.000    -1.844131   -.8095057
+        black |   5.930982   .1384355    42.84   0.000     5.659653     6.20231
+    otherrace |   2.529977     .22573    11.21   0.000     2.087554    2.972399
+        _cons |   6.902941   .5497432    12.56   0.000     5.825464    7.980418
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 2 weeks worked all women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls us80a_uhrswork (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black othe
+> rrace, r
+
+Instrumental variables (2SLS) regression          Number of obs   =    392,925
+                                                  Wald chi2(8)    =   15955.23
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0620
+                                                  Root MSE        =      18.33
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_uhrsw~k |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -4.625618   .9758431    -4.74   0.000    -6.538235      -2.713
+          age |   .8531573   .0326804    26.11   0.000     .7891049    .9172096
+agefirstbirth |  -1.243248   .0464097   -26.79   0.000     -1.33421   -1.152287
+       boy1st |  -.0799378   .0589021    -1.36   0.175    -.1953837    .0355081
+       boy2nd |  -.1237875   .0588854    -2.10   0.036    -.2392008   -.0083741
+     hispanic |   .2241653   .2373025     0.94   0.345    -.2409391    .6892697
+        black |   5.214052    .119268    43.72   0.000     4.980291    5.447813
+    otherrace |   3.673029   .1997075    18.39   0.000     3.281609    4.064448
+        _cons |   20.36711   .4789027    42.53   0.000     19.42848    21.30574
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 2 hours worked per week all women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls inflated_incwage (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black ot
+> herrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    392,925
+                                                  Wald chi2(8)    =   15488.41
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0608
+                                                  Root MSE        =      10118
+
+-------------------------------------------------------------------------------
+              |               Robust
+inflated_in~e |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -2230.575   538.7321    -4.14   0.000    -3286.471    -1174.68
+          age |   579.3111   17.94985    32.27   0.000     544.1301    614.4922
+agefirstbirth |  -367.7397   25.75196   -14.28   0.000    -418.2126   -317.2668
+       boy1st |  -39.36813   32.52981    -1.21   0.226    -103.1254    24.38913
+       boy2nd |  -35.60445   32.46554    -1.10   0.273    -99.23574    28.02684
+     hispanic |   113.6809   119.6093     0.95   0.342     -120.749    348.1108
+        black |   3805.818   69.07702    55.10   0.000     3670.429    3941.206
+    otherrace |   2285.296   123.5031    18.50   0.000     2043.234    2527.357
+        _cons |  -2434.767   260.3514    -9.35   0.000    -2945.046   -1924.488
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 2 labor income all women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls lnfamilyinc (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherra
+> ce,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    391,981
+                                                  Wald chi2(8)    =   20132.94
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0728
+                                                  Root MSE        =     1.2154
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnfamilyinc |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.0323029   .0648814    -0.50   0.619    -.1594681    .0948622
+          age |   .0434322    .002179    19.93   0.000     .0391615    .0477029
+agefirstbirth |   .0340736   .0030805    11.06   0.000      .028036    .0401112
+       boy1st |   .0027823   .0039025     0.71   0.476    -.0048664     .010431
+       boy2nd |    .007051   .0039083     1.80   0.071    -.0006092    .0147111
+     hispanic |  -.5208226   .0186306   -27.96   0.000    -.5573379   -.4843074
+        black |   -.615995   .0094399   -65.25   0.000    -.6344968   -.5974932
+    otherrace |   -.241355   .0159438   -15.14   0.000    -.2726043   -.2101056
+        _cons |   8.421057   .0324844   259.23   0.000     8.357389    8.484725
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 2 ln-family income all women) append
+table7.xml
+dir : seeout
+
+. 
+. *column 3*
+. ivregress 2sls workedforpay (children2more=twogirls twoboys) age agefirstbirth boy1st hispanic black othe
+> rrace, r
+
+Instrumental variables (2SLS) regression          Number of obs   =    392,925
+                                                  Wald chi2(7)    =   10876.90
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0499
+                                                  Root MSE        =     .48359
+
+-------------------------------------------------------------------------------
+              |               Robust
+ workedforpay |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.1193983   .0255836    -4.67   0.000    -.1695413   -.0692554
+          age |   .0228734   .0008571    26.69   0.000     .0211936    .0245532
+agefirstbirth |  -.0259552   .0012184   -21.30   0.000    -.0283431   -.0235672
+       boy1st |  -.0012875   .0015545    -0.83   0.408    -.0043343    .0017592
+     hispanic |    -.04195   .0061068    -6.87   0.000     -.053919   -.0299809
+        black |   .0965142   .0030195    31.96   0.000     .0905962    .1024323
+    otherrace |    .036207    .005004     7.24   0.000     .0263992    .0460147
+        _cons |   .4568803   .0124929    36.57   0.000     .4323947     .481366
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twogirls
+               twoboys
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  5.70118  (p = 0.0170)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .01695349
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 3 worked for pay al
+> l women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls us80a_wkswork1 (children2more=twogirls twoboys) age agefirstbirth boy1st hispanic black ot
+> herrace,r 
+
+Instrumental variables (2SLS) regression          Number of obs   =    392,925
+                                                  Wald chi2(7)    =   18898.88
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0734
+                                                  Root MSE        =     21.388
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_wkswo~1 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -5.656301   1.131734    -5.00   0.000    -7.874459   -3.438144
+          age |   1.398951   .0378523    36.96   0.000     1.324761     1.47314
+agefirstbirth |  -1.264365   .0539132   -23.45   0.000    -1.370033   -1.158697
+       boy1st |  -.1194932   .0687437    -1.74   0.082    -.2542283     .015242
+     hispanic |  -1.373921     .26336    -5.22   0.000    -1.890097   -.8577451
+        black |     5.9104   .1382354    42.76   0.000     5.639464    6.181336
+    otherrace |   2.509184   .2256398    11.12   0.000     2.066938    2.951429
+        _cons |   6.704023   .5434677    12.34   0.000     5.638846      7.7692
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twogirls
+               twoboys
+
+. estat overid 
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  5.67449  (p = 0.0172)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .01721338
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 3 weeks worked all 
+> women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls us80a_uhrswork (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black ot
+> herrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    392,925
+                                                  Wald chi2(7)    =   15944.27
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0614
+                                                  Root MSE        =     18.335
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_uhrsw~k |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -4.399211   .9698992    -4.54   0.000    -6.300179   -2.498244
+          age |   .8458742   .0324995    26.03   0.000     .7821763    .9095721
+agefirstbirth |  -1.232829   .0461459   -26.72   0.000    -1.323273   -1.142384
+       boy1st |  -.0797062   .0589209    -1.35   0.176    -.1951889    .0357766
+     hispanic |   .1885304   .2367435     0.80   0.426    -.2754783    .6525391
+        black |   5.198481   .1190691    43.66   0.000      4.96511    5.431852
+    otherrace |   3.657298   .1996122    18.32   0.000     3.266065     4.04853
+        _cons |   20.21662   .4734272    42.70   0.000     19.28872    21.14452
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =   4.4164  (p = 0.0356)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .03559507
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 3 hours worked per 
+> week all women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls inflated_incwage (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black 
+> otherrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    392,925
+                                                  Wald chi2(7)    =   15481.82
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0605
+                                                  Root MSE        =      10120
+
+-------------------------------------------------------------------------------
+              |               Robust
+inflated_in~e |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -2165.455   535.9579    -4.04   0.000    -3215.913   -1114.997
+          age |   577.2163   17.86505    32.31   0.000     542.2014    612.2312
+agefirstbirth |  -364.7427   25.63088   -14.23   0.000    -414.9783   -314.5071
+       boy1st |   -39.3015   32.53655    -1.21   0.227     -103.072    24.46896
+     hispanic |   103.4314   119.3394     0.87   0.386    -130.4695    337.3322
+        black |   3801.339   68.96369    55.12   0.000     3666.173    3936.505
+    otherrace |   2280.771    123.439    18.48   0.000     2038.835    2522.707
+        _cons |  -2478.051    257.617    -9.62   0.000    -2982.971   -1973.131
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  1.20223  (p = 0.2729)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .27287557
+
+. outreg2 using table7,  excel stats(coef se) e(jstat) keep(children2more) ctitle(column 3 labor income all
+>  women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls lnfamilyinc (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black other
+> race,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    391,981
+                                                  Wald chi2(7)    =   20135.71
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0731
+                                                  Root MSE        =     1.2152
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnfamilyinc |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.0453598   .0644982    -0.70   0.482    -.1717739    .0810542
+          age |   .0438522   .0021675    20.23   0.000      .039604    .0481003
+agefirstbirth |   .0334724   .0030642    10.92   0.000     .0274667    .0394781
+       boy1st |   .0027697   .0039019     0.71   0.478    -.0048778    .0104173
+     hispanic |  -.5187655   .0185873   -27.91   0.000    -.5551959   -.4823351
+        black |  -.6150924   .0094252   -65.26   0.000    -.6335655   -.5966193
+    otherrace |  -.2404431   .0159296   -15.09   0.000    -.2716645   -.2092218
+        _cons |   8.429695   .0321517   262.19   0.000     8.366679    8.492712
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  3.25587  (p = 0.0712)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .07116826
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 3 ln-family income 
+> all women) append
+table7.xml
+dir : seeout
+
+. 
+. /*Part II*/
+. /*maried women*/
+. keep if us80a_agemarr+marrqtr<=agefirstbirth+birthqtr1 & us80a_marrno==1 
+(102,414 observations deleted)
+
+. keep if us80a_marst==1 | us80a_marst==2
+(31,677 observations deleted)
+
+. drop _merge
+
+. save Mainsample, replace
+file Mainsample.dta saved
+
+. 
+. /*Table 6 OLS regression married women*/
+. reg children2more samesex, r
+
+Linear regression                               Number of obs     =    258,834
+                                                F(1, 258832)      =    1246.82
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0048
+                                                Root MSE          =     .48366
+
+------------------------------------------------------------------------------
+             |               Robust
+children2m~e |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     samesex |    .067115   .0019007    35.31   0.000     .0633897    .0708404
+       _cons |   .3438159   .0013278   258.93   0.000     .3412134    .3464185
+------------------------------------------------------------------------------
+
+. outreg2 using table6,excel ctitle(OLS_More than 2 children) append
+table6.xml
+dir : seeout
+
+. reg children2more boy1st boy2nd samesex age agefirstbirth black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    258,834
+                                                F(8, 258825)      =    3659.48
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0899
+                                                Root MSE          =     .46253
+
+-------------------------------------------------------------------------------
+              |               Robust
+children2more |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+       boy1st |  -.0117578   .0018194    -6.46   0.000    -.0153238   -.0081917
+       boy2nd |  -.0102391   .0018194    -5.63   0.000    -.0138051    -.006673
+      samesex |   .0689992   .0018192    37.93   0.000     .0654335    .0725648
+          age |   .0325874   .0002808   116.07   0.000     .0320371    .0331377
+agefirstbirth |  -.0460426   .0003158  -145.78   0.000    -.0466616   -.0454236
+        black |   .0684217   .0040328    16.97   0.000     .0605176    .0763258
+    otherrace |   .0647597   .0052232    12.40   0.000     .0545223    .0749971
+     hispanic |   .1650928   .0056534    29.20   0.000     .1540123    .1761733
+        _cons |   .3567276   .0087768    40.64   0.000     .3395253    .3739298
+-------------------------------------------------------------------------------
+
+. outreg2 using table6,excel keep(boy1st boy2nd samesex) ctitle(OLS_More than 2 children) append
+table6.xml
+dir : seeout
+
+. reg children2more boy1st twoboys twogirls age agefirstbirth black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    258,834
+                                                F(8, 258825)      =    3659.48
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0899
+                                                Root MSE          =     .46253
+
+-------------------------------------------------------------------------------
+              |               Robust
+children2more |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+       boy1st |  -.0015187   .0025466    -0.60   0.551      -.00651    .0034726
+      twoboys |   .0587601   .0025295    23.23   0.000     .0538023    .0637179
+     twogirls |   .0792382   .0026156    30.29   0.000     .0741117    .0843648
+          age |   .0325874   .0002808   116.07   0.000     .0320371    .0331377
+agefirstbirth |  -.0460426   .0003158  -145.78   0.000    -.0466616   -.0454236
+        black |   .0684217   .0040328    16.97   0.000     .0605176    .0763258
+    otherrace |   .0647597   .0052232    12.40   0.000     .0545223    .0749971
+     hispanic |   .1650928   .0056534    29.20   0.000     .1540123    .1761733
+        _cons |   .3464885   .0087722    39.50   0.000     .3292951    .3636819
+-------------------------------------------------------------------------------
+
+. outreg2 using table6, excel keep(boy1st twoboys twogirls) ctitle(OLS_More than 2 children) append
+table6.xml
+dir : seeout
+
+. 
+. /*Table 7 instrumental variable married women*/
+. *column 4*
+. reg workedforpay children2more age agefirstbirth boy1st boy2nd black otherrace hispanic,r
+
+Linear regression                               Number of obs     =    258,834
+                                                F(8, 258825)      =    1840.07
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0495
+                                                Root MSE          =      .4868
+
+-------------------------------------------------------------------------------
+              |               Robust
+ workedforpay |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.1644521   .0020405   -80.59   0.000    -.1684515   -.1604527
+          age |   .0235262   .0003076    76.49   0.000     .0229234     .024129
+agefirstbirth |  -.0285521   .0003638   -78.49   0.000    -.0292651   -.0278391
+       boy1st |   .0006904   .0019147     0.36   0.718    -.0030624    .0044432
+       boy2nd |  -.0035572   .0019145    -1.86   0.063    -.0073096    .0001952
+        black |   .1875507   .0038848    48.28   0.000     .1799365    .1951648
+    otherrace |     .05822   .0056016    10.39   0.000      .047241    .0691989
+     hispanic |   .0180139   .0059752     3.01   0.003     .0063026    .0297251
+        _cons |   .4849572   .0095617    50.72   0.000     .4662165    .5036979
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 4 worked for pay married women) append
+table7.xml
+dir : seeout
+
+. reg us80a_wkswork1 children2more age agefirstbirth boy1st boy2nd black otherrace hispanic,r
+
+Linear regression                               Number of obs     =    258,834
+                                                F(8, 258825)      =    2616.76
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0705
+                                                Root MSE          =     21.022
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_wkswo~1 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -7.896426   .0868266   -90.94   0.000    -8.066604   -7.726249
+          age |   1.365469   .0130615   104.54   0.000     1.339869     1.39107
+agefirstbirth |  -1.378677   .0158484   -86.99   0.000     -1.40974   -1.347615
+       boy1st |  -.0596496   .0826917    -0.72   0.471     -.221723    .1024239
+       boy2nd |  -.1103079   .0826802    -1.33   0.182    -.2723589    .0517432
+        black |   10.44372   .1863597    56.04   0.000     10.07846    10.80898
+    otherrace |   4.001438   .2533196    15.80   0.000     3.504938    4.497938
+     hispanic |    1.14747   .2513384     4.57   0.000     .6548533    1.640087
+        _cons |   9.788634   .3936236    24.87   0.000     9.017142    10.56013
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 4 weeks worked married women) append
+table7.xml
+dir : seeout
+
+. reg  us80a_uhrswork children2more age agefirstbirth boy1st boy2nd black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    258,834
+                                                F(8, 258825)      =    2313.82
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0636
+                                                Root MSE          =     17.771
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_uhrsw~k |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -5.911912   .0740659   -79.82   0.000    -6.057079   -5.766745
+          age |   .8219283   .0114433    71.83   0.000     .7994996    .8443569
+agefirstbirth |  -1.297882   .0132705   -97.80   0.000    -1.323892   -1.271872
+       boy1st |    .027868   .0698951     0.40   0.690    -.1091245    .1648605
+       boy2nd |  -.0983124   .0698969    -1.41   0.160    -.2353084    .0386835
+        black |   9.410887   .1580196    59.56   0.000     9.101173    9.720601
+    otherrace |   5.018928   .2235457    22.45   0.000     4.580784    5.457071
+     hispanic |   2.771303   .2341382    11.84   0.000     2.312399    3.230208
+        _cons |   21.48562   .3500714    61.37   0.000     20.79949    22.17175
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 4 hours work per week married women) append
+table7.xml
+dir : seeout
+
+. reg inflated_incwage children2more age agefirstbirth boy1st boy2nd black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    258,834
+                                                F(8, 258825)      =    1793.18
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0587
+                                                Root MSE          =       9544
+
+-------------------------------------------------------------------------------
+              |               Robust
+inflated_in~e |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -3058.977   38.94787   -78.54   0.000    -3135.314    -2982.64
+          age |   512.8713    5.83999    87.82   0.000      501.425    524.3175
+agefirstbirth |  -344.3307   7.772752   -44.30   0.000    -359.5651   -329.0963
+       boy1st |   12.52753   37.54254     0.33   0.739    -61.05484    86.10989
+       boy2nd |   6.457549   37.52132     0.17   0.863    -67.08323    79.99832
+        black |   6047.506   101.2078    59.75   0.000     5849.141     6245.87
+    otherrace |   3142.841    142.809    22.01   0.000     2862.939    3422.743
+     hispanic |   1143.672   111.3567    10.27   0.000     925.4161    1361.928
+        _cons |  -1404.543    177.019    -7.93   0.000    -1751.495    -1057.59
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 4 labor income married women) append
+table7.xml
+dir : seeout
+
+. reg lnfamilyinc children2more age agefirstbirth boy1st boy2nd black otherrace hispanic, r
+
+Linear regression                               Number of obs     =    258,085
+                                                F(8, 258076)      =    1240.76
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0491
+                                                Root MSE          =     .93062
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnfamilyinc |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.1244964    .004061   -30.66   0.000    -.1324559   -.1165369
+          age |   .0436411   .0006285    69.44   0.000     .0424093    .0448729
+agefirstbirth |    .018045   .0006955    25.94   0.000     .0166818    .0194082
+       boy1st |   .0017668   .0036674     0.48   0.630    -.0054212    .0089547
+       boy2nd |   .0012912   .0036664     0.35   0.725    -.0058949    .0084774
+        black |  -.2115545   .0107305   -19.72   0.000     -.232586   -.1905229
+    otherrace |   -.230179   .0172078   -13.38   0.000    -.2639057   -.1964522
+     hispanic |  -.3613767   .0162123   -22.29   0.000    -.3931524    -.329601
+        _cons |   8.924861   .0195166   457.30   0.000     8.886609    8.963113
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 4 ln-family income married women) append
+table7.xml
+dir : seeout
+
+. gen lnnowifeinc=ln(inflated_nonwifeinc+1)
+(1,008 missing values generated)
+
+. reg lnnowifeinc children2more age agefirstbirth boy1st boy2nd black otherrace hispanic,r
+
+Linear regression                               Number of obs     =    257,826
+                                                F(8, 257817)      =     963.80
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0416
+                                                Root MSE          =     1.1912
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnnowifeinc |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.0419274   .0051287    -8.17   0.000    -.0519796   -.0318752
+          age |   .0327719   .0007984    41.05   0.000      .031207    .0343368
+agefirstbirth |   .0343392   .0008973    38.27   0.000     .0325806    .0360979
+       boy1st |    .003631   .0046962     0.77   0.439    -.0055734    .0128355
+       boy2nd |   .0072237   .0046977     1.54   0.124    -.0019836     .016431
+        black |  -.5341536   .0154369   -34.60   0.000    -.5644095   -.5038977
+    otherrace |  -.3786492   .0207813   -18.22   0.000      -.41938   -.3379184
+     hispanic |  -.4675181    .019784   -23.63   0.000    -.5062943   -.4287419
+        _cons |   8.688011   .0246037   353.12   0.000     8.639788    8.736233
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 4 ln-non wife income married women) append
+table7.xml
+dir : seeout
+
+. 
+. *column 5*
+. ivregress 2sls workedforpay (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherr
+> ace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,834
+                                                  Wald chi2(8)    =    7533.23
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0479
+                                                  Root MSE        =     .48718
+
+-------------------------------------------------------------------------------
+              |               Robust
+ workedforpay |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |   -.122332     .02778    -4.40   0.000    -.1767798   -.0678841
+          age |   .0221551   .0009532    23.24   0.000     .0202869    .0240233
+agefirstbirth |  -.0266146   .0013255   -20.08   0.000    -.0292126   -.0240167
+       boy1st |   .0011115    .001936     0.57   0.566     -.002683     .004906
+       boy2nd |  -.0032098   .0019296    -1.66   0.096    -.0069917    .0005721
+     hispanic |   .0110659   .0075321     1.47   0.142    -.0036967    .0258284
+        black |   .1846868   .0043201    42.75   0.000     .1762195    .1931541
+    otherrace |   .0555164   .0058775     9.45   0.000     .0439967    .0670362
+        _cons |   .4685387    .014423    32.49   0.000     .4402701    .4968072
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 5 worked for pay married women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls us80a_wkswork1 (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black othe
+> rrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,834
+                                                  Wald chi2(8)    =   11822.47
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0682
+                                                  Root MSE        =     21.048
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_wkswo~1 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -5.634436   1.200253    -4.69   0.000    -7.986888   -3.281983
+          age |   1.291836   .0411388    31.40   0.000     1.211205    1.372467
+agefirstbirth |  -1.274632   .0573344   -22.23   0.000    -1.387006   -1.162259
+       boy1st |   -.037039   .0836479    -0.44   0.658    -.2009859    .1269078
+       boy2nd |  -.0916509   .0833722    -1.10   0.272    -.2550575    .0717557
+     hispanic |   .7743386   .3201177     2.42   0.016     .1469194    1.401758
+        black |   10.28992   .2037956    50.49   0.000     9.890487    10.68935
+    otherrace |   3.856248   .2649698    14.55   0.000     3.336917     4.37558
+        _cons |   8.906901   .6102059    14.60   0.000      7.71092    10.10288
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 5 weeks worked married women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls us80a_uhrswork (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black othe
+> rrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,834
+                                                  Wald chi2(8)    =   11291.13
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0624
+                                                  Root MSE        =     17.781
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_uhrsw~k |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -4.590148   1.013931    -4.53   0.000    -6.577415    -2.60288
+          age |   .7789015   .0348206    22.37   0.000     .7106545    .8471486
+agefirstbirth |  -1.237085     .04835   -25.59   0.000    -1.331849   -1.142321
+       boy1st |   .0410802   .0706457     0.58   0.561    -.0973828    .1795431
+       boy2nd |  -.0874105   .0704687    -1.24   0.215    -.2255266    .0507056
+     hispanic |   2.553269   .2876844     8.88   0.000     1.989418     3.11712
+        black |   9.321015   .1723694    54.08   0.000     8.983177    9.658853
+    otherrace |   4.934088   .2327917    21.20   0.000     4.477825    5.390352
+        _cons |   20.97039    .527793    39.73   0.000     19.93594    22.00485
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 5 hours worked per week married women) appe
+> nd
+table7.xml
+dir : seeout
+
+. ivregress 2sls inflated_incwage (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black ot
+> herrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,834
+                                                  Wald chi2(8)    =    8782.46
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0550
+                                                  Root MSE        =       9563
+
+-------------------------------------------------------------------------------
+              |               Robust
+inflated_in~e |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -1755.339   545.2094    -3.22   0.001    -2823.929   -686.7479
+          age |   470.4346   18.61558    25.27   0.000     433.9487    506.9204
+agefirstbirth |  -284.3671   26.16299   -10.87   0.000    -335.6456   -233.0886
+       boy1st |   25.55852   38.04716     0.67   0.502    -49.01255    100.1296
+       boy2nd |   17.20998   37.85879     0.45   0.649    -56.99189    91.41185
+     hispanic |   928.6278   143.8957     6.45   0.000     646.5974    1210.658
+        black |   5958.867   107.7224    55.32   0.000     5747.734    6169.999
+    otherrace |   3059.165   147.6769    20.72   0.000     2769.723    3348.606
+        _cons |  -1912.706   276.2018    -6.93   0.000    -2454.051    -1371.36
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 5 labor income married women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls lnfamilyinc (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherra
+> ce,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,085
+                                                  Wald chi2(8)    =    9125.67
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0483
+                                                  Root MSE        =     .93103
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnfamilyinc |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.0640412   .0532604    -1.20   0.229    -.1684296    .0403472
+          age |   .0416732   .0018577    22.43   0.000     .0380321    .0453142
+agefirstbirth |   .0208268   .0025512     8.16   0.000     .0158265    .0258271
+       boy1st |   .0023575    .003702     0.64   0.524    -.0048983    .0096133
+       boy2nd |   .0017983   .0036868     0.49   0.626    -.0054278    .0090244
+     hispanic |  -.3713604   .0185425   -20.03   0.000     -.407703   -.3350178
+        black |  -.2156851   .0112488   -19.17   0.000    -.2377323    -.193638
+    otherrace |  -.2340813   .0176418   -13.27   0.000    -.2686586    -.199504
+        _cons |   8.901296   .0281748   315.93   0.000     8.846074    8.956518
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 5 ln-family income married women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls lnnowifeinc (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherra
+> ce,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,826
+                                                  Wald chi2(8)    =    7653.84
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0414
+                                                  Root MSE        =     1.1912
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnnowifeinc |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.0111859   .0681641    -0.16   0.870     -.144785    .1224132
+          age |   .0317713   .0023666    13.42   0.000     .0271328    .0364097
+agefirstbirth |    .035754   .0032609    10.96   0.000     .0293628    .0421452
+       boy1st |    .003929   .0047242     0.83   0.406    -.0053303    .0131883
+       boy2nd |   .0074833   .0047218     1.58   0.113    -.0017713    .0167379
+     hispanic |  -.4725965   .0227539   -20.77   0.000    -.5171932   -.4279998
+        black |  -.5362502   .0161382   -33.23   0.000    -.5678804     -.50462
+    otherrace |  -.3806358     .02133   -17.85   0.000    -.4224419   -.3388297
+        _cons |   8.676021   .0358504   242.01   0.000     8.605756    8.746287
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st boy2nd hispanic black otherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 5 ln-non wife income married women) append
+table7.xml
+dir : seeout
+
+. 
+. *column 6*
+. ivregress 2sls workedforpay (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black othe
+> rrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,834
+                                                  Wald chi2(7)    =    7528.92
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0475
+                                                  Root MSE        =     .48729
+
+-------------------------------------------------------------------------------
+              |               Robust
+ workedforpay |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.1168449   .0275901    -4.24   0.000    -.1709205   -.0627693
+          age |   .0219764   .0009473    23.20   0.000     .0201196    .0238331
+agefirstbirth |  -.0263632   .0013171   -20.02   0.000    -.0289447   -.0237816
+       boy1st |   .0011331   .0019364     0.59   0.558    -.0026622    .0049283
+     hispanic |    .010161   .0075151     1.35   0.176    -.0045684    .0248904
+        black |   .1843382   .0043162    42.71   0.000     .1758787    .1927978
+    otherrace |   .0551745   .0058744     9.39   0.000     .0436609     .066688
+        _cons |   .4648145     .01425    32.62   0.000     .4368849     .492744
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  2.76585  (p = 0.0963)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .0962955
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 6 worked for pay ma
+> rried women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls us80a_wkswork1 (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black ot
+> herrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,834
+                                                  Wald chi2(7)    =   11818.07
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0679
+                                                  Root MSE        =     21.052
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_wkswo~1 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |   -5.47776    1.19196    -4.60   0.000    -7.813959   -3.141562
+          age |   1.286733   .0408858    31.47   0.000     1.206598    1.366867
+agefirstbirth |  -1.267451   .0569688   -22.25   0.000    -1.379108   -1.155794
+       boy1st |  -.0364225    .083664    -0.44   0.663     -.200401     .127556
+     hispanic |   .7485017   .3193737     2.34   0.019     .1225407    1.374463
+        black |   10.27997    .203643    50.48   0.000     9.880834     10.6791
+    otherrace |   3.846484   .2648606    14.52   0.000     3.327367    4.365601
+        _cons |   8.800562   .6024216    14.61   0.000     7.619838    9.981287
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  1.20802  (p = 0.2717)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .2717244
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 6 weeks worked marr
+> ied women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls us80a_uhrswork (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black ot
+> herrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,834
+                                                  Wald chi2(7)    =   11287.93
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0622
+                                                  Root MSE        =     17.784
+
+-------------------------------------------------------------------------------
+              |               Robust
+us80a_uhrsw~k |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -4.440721   1.006409    -4.41   0.000    -6.413248   -2.468195
+          age |   .7740342   .0345927    22.38   0.000     .7062338    .8418347
+agefirstbirth |  -1.230236   .0480199   -25.62   0.000    -1.324353   -1.136119
+       boy1st |   .0416682    .070657     0.59   0.555     -.096817    .1801534
+     hispanic |   2.528628   .2869998     8.81   0.000     1.966118    3.091137
+        black |   9.311524    .172207    54.07   0.000     8.974004    9.649044
+    otherrace |   4.924775    .232688    21.16   0.000     4.468715    5.380835
+        _cons |   20.86897   .5211232    40.05   0.000     19.84759    21.89036
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  1.53819  (p = 0.2149)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .21488746
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 6 hours worked per 
+> week married women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls inflated_incwage (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black 
+> otherrace,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,834
+                                                  Wald chi2(7)    =    8783.02
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0551
+                                                  Root MSE        =     9562.1
+
+-------------------------------------------------------------------------------
+              |               Robust
+inflated_in~e |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -1784.759   541.4135    -3.30   0.001     -2845.91   -723.6078
+          age |   471.3929   18.49872    25.48   0.000     435.1361    507.6497
+agefirstbirth |  -285.7155   26.00113   -10.99   0.000    -336.6768   -234.7542
+       boy1st |   25.44274   38.04246     0.67   0.504     -49.1191    100.0046
+     hispanic |   933.4794   143.5418     6.50   0.000     652.1427    1214.816
+        black |   5960.735   107.5798    55.41   0.000     5749.883    6171.588
+    otherrace |   3060.998   147.6238    20.74   0.000     2771.661    3350.336
+        _cons |  -1892.738   272.8317    -6.94   0.000    -2427.478   -1357.997
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  .206682  (p = 0.6494)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .6493803
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 6 labor income marr
+> ied women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls lnfamilyinc (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black other
+> race,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    258,085
+                                                  Wald chi2(7)    =    9122.92
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0484
+                                                  Root MSE        =     .93099
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnfamilyinc |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.0671729   .0529847    -1.27   0.205    -.1710211    .0366753
+          age |   .0417752   .0018485    22.60   0.000     .0381522    .0453982
+agefirstbirth |   .0206832   .0025398     8.14   0.000     .0157054    .0256611
+       boy1st |   .0023456   .0037019     0.63   0.526      -.00491    .0096011
+     hispanic |  -.3708434   .0185036   -20.04   0.000    -.4071097    -.334577
+        black |  -.2154848   .0112478   -19.16   0.000      -.23753   -.1934395
+    otherrace |   -.233885   .0176392   -13.26   0.000    -.2684573   -.1993128
+        _cons |   8.903403   .0279477   318.57   0.000     8.848627     8.95818
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  .237942  (p = 0.6257)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .62569629
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 6 ln-family income 
+> married women) append
+table7.xml
+dir : seeout
+
+. ivregress 2sls lnnowifeinc (children2more=twoboys twogirls) age agefirstbirth boy1st hispanic black other
+> race,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,826
+                                                  Wald chi2(7)    =    7651.77
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0415
+                                                  Root MSE        =     1.1912
+
+-------------------------------------------------------------------------------
+              |               Robust
+  lnnowifeinc |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.0242814   .0678129    -0.36   0.720    -.1571922    .1086294
+          age |   .0321978   .0023547    13.67   0.000     .0275826     .036813
+agefirstbirth |   .0351537   .0032451    10.83   0.000     .0287933     .041514
+       boy1st |   .0038803   .0047243     0.82   0.411    -.0053791    .0131396
+     hispanic |  -.4704339   .0227116   -20.71   0.000    -.5149477     -.42592
+        black |  -.5354134   .0161291   -33.20   0.000    -.5670258   -.5038011
+    otherrace |  -.3798143   .0213217   -17.81   0.000    -.4216041   -.3380245
+        _cons |   8.684817    .035524   244.48   0.000     8.615191    8.754443
+-------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   age agefirstbirth boy1st hispanic black otherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  2.51189  (p = 0.1130)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .11299032
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 6 ln-non wife incom
+> e married women) append
+table7.xml
+dir : seeout
+
+. 
+. 
+. /*Part III*/
+. /*Table 2 mean second column for married women and spouse*/
+. *generate spouse sample*
+. use Mainsample, replace
+
+. keep us80a_sploc us80a_serial
+
+. rename us80a_sploc us80a_pernum
+
+. merge 1:m us80a_pernum us80a_serial using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta"
+(label us80a_qwksworklbl already defined)
+(label us80a_quhrsworlbl already defined)
+(label us80a_qsexlbl already defined)
+(label us80a_qincwagelbl already defined)
+(label us80a_qincbuslbl already defined)
+(label us80a_qeduclbl already defined)
+(label us80a_qchbornlbl already defined)
+(label us80a_qbpllbl already defined)
+(label us80a_qbirthmolbl already defined)
+(label us80a_qagelbl already defined)
+(label us80a_birthqtrlbl already defined)
+(label us80a_widowlbl already defined)
+(label us80a_uhrsworklbl already defined)
+(label us80a_wkswork1lbl already defined)
+(label us80a_classwkrlbl already defined)
+(label us80a_higradelbl already defined)
+(label us80a_schoollbl already defined)
+(label us80a_hispanlbl already defined)
+(label us80a_bpllbl already defined)
+(label us80a_marrqtrlbl already defined)
+(label us80a_chbornlbl already defined)
+(label us80a_marrnolbl already defined)
+(label us80a_agemarrlbl already defined)
+(label us80a_marstlbl already defined)
+(label us80a_racelbl already defined)
+(label us80a_sexlbl already defined)
+(label us80a_agelbl already defined)
+(label us80a_nchildlbl already defined)
+(label us80a_sploclbl already defined)
+(label us80a_momrulelbl already defined)
+(label us80a_momloclbl already defined)
+(label us80a_pernumlbl already defined)
+(label educuslbl already defined)
+(label yrschllbl already defined)
+(label edattandlbl already defined)
+(label edattanlbl already defined)
+(label schoollbl already defined)
+(label hispanlbl already defined)
+(label racelbl already defined)
+(label agemarrlbl already defined)
+(label sexlbl already defined)
+(label agelbl already defined)
+(label parrulelbl already defined)
+(label us80a_statefiplbl already defined)
+(label stateuslbl already defined)
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                    11,087,790
+        from master                     1,752  (_merge==1)
+        from using                 11,086,038  (_merge==2)
+
+    matched                           257,082  (_merge==3)
+    -----------------------------------------
+
+. keep if _merge==3
+(11,087,790 observations deleted)
+
+. gen dad=1 if _merge==3
+
+. replace dad=0 if dad==.
+(0 real changes made)
+
+. save dad, replace
+file dad.dta saved
+
+. *merge spouse sample with children sample*
+. drop _merge us80a_sploc
+
+. rename us80a_incwage fincwage
+
+. rename age fage
+
+. rename us80a_wkswork1 fwkswork
+
+. rename us80a_uhrswork fuhrswork
+
+. rename us80a_race frace
+
+. rename us80a_pernum us80a_sploc
+
+. merge 1:m us80a_sploc us80a_serial using "Mainsample.dta"
+(label us80a_qwksworklbl already defined)
+(label us80a_quhrsworlbl already defined)
+(label us80a_qincwagelbl already defined)
+(label us80a_qincbuslbl already defined)
+(label us80a_qeduclbl already defined)
+(label us80a_qchbornlbl already defined)
+(label us80a_qbpllbl already defined)
+(label us80a_widowlbl already defined)
+(label us80a_uhrsworklbl already defined)
+(label us80a_wkswork1lbl already defined)
+(label us80a_classwkrlbl already defined)
+(label us80a_higradelbl already defined)
+(label us80a_schoollbl already defined)
+(label us80a_hispanlbl already defined)
+(label us80a_bpllbl already defined)
+(label us80a_marrqtrlbl already defined)
+(label us80a_chbornlbl already defined)
+(label us80a_marrnolbl already defined)
+(label us80a_agemarrlbl already defined)
+(label us80a_marstlbl already defined)
+(label us80a_racelbl already defined)
+(label us80a_sexlbl already defined)
+(label us80a_agelbl already defined)
+(label us80a_nchildlbl already defined)
+(label us80a_sploclbl already defined)
+(label us80a_momrulelbl already defined)
+(label us80a_momloclbl already defined)
+(label educuslbl already defined)
+(label yrschllbl already defined)
+(label edattandlbl already defined)
+(label edattanlbl already defined)
+(label schoollbl already defined)
+(label hispanlbl already defined)
+(label racelbl already defined)
+(label agemarrlbl already defined)
+(label parrulelbl already defined)
+(label us80a_statefiplbl already defined)
+(label stateuslbl already defined)
+(label us80a_pernumlbl already defined)
+(label agelbl already defined)
+(label sexlbl already defined)
+(label us80a_birthqtrlbl already defined)
+(label us80a_qagelbl already defined)
+(label us80a_qbirthmolbl already defined)
+(label us80a_qsexlbl already defined)
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                         1,752
+        from master                         0  (_merge==1)
+        from using                      1,752  (_merge==2)
+
+    matched                           257,082  (_merge==3)
+    -----------------------------------------
+
+. save dadwchild, replace
+file dadwchild.dta saved
+
+. 
+. 
+. *generate covariates* 
+. gen fworkedforpay=1 if fwkswork>0
+(6,074 missing values generated)
+
+. replace fworkedforpay=0 if fworkedforpay==.
+(6,074 real changes made)
+
+. gen inflated_fincwage=(fincwage*2.099173554)
+(1,752 missing values generated)
+
+. gen fagefirstbirth=fage-age1
+(1,752 missing values generated)
+
+. gen fblack=1 if frace==3
+(244,250 missing values generated)
+
+. replace fblack=0 if fblack==.
+(244,250 real changes made)
+
+. gen fhispanic=1 if frace==2
+(251,722 missing values generated)
+
+. replace fhispanic=0 if fhispanic==.
+(251,722 real changes made)
+
+. gen fotherrace=1 if frace!=1 & frace!=2 & frace!=3
+(249,840 missing values generated)
+
+. replace fotherrace=0 if fotherrace==.
+(249,840 real changes made)
+
+. save family, replace
+file family.dta saved
+
+. 
+. mean chborn children2more boy1st boy2nd twoboys twogirls samesex twin age agefirstbirth workedforpay us80
+> a_wkswork1 us80a_uhrswork inflated_incwage inflated_ftotinc inflated_nonwifeinc fage fagefirstbirth fwork
+> edforpay fwkswork fuhrswork inflated_fincwage
+
+Mean estimation                          Number of obs   =    257,082
+
+---------------------------------------------------------------------
+                    |       Mean   Std. Err.     [95% Conf. Interval]
+--------------------+------------------------------------------------
+             chborn |   2.506313   .0015227      2.503329    2.509298
+      children2more |   .3777394   .0009562      .3758653    .3796135
+             boy1st |   .5147113   .0009857      .5127793    .5166432
+             boy2nd |   .5131125   .0009858      .5111804    .5150447
+            twoboys |   .2667359   .0008722      .2650263    .2684455
+           twogirls |   .2389121    .000841      .2372637    .2405605
+            samesex |    .505648   .0009861      .5037153    .5075807
+               twin |    .008647   .0001826      .0082891    .0090049
+                age |   30.25115    .006818      30.23779    30.26451
+      agefirstbirth |   21.69016    .005849       21.6787    21.70162
+       workedforpay |   .5263885   .0009848      .5244584    .5283186
+     us80a_wkswork1 |   18.85982   .0430087      18.77552    18.94411
+     us80a_uhrswork |   16.67411   .0362025      16.60316    16.74507
+   inflated_incwage |    5958.58   19.40005      5920.557    5996.604
+   inflated_ftotinc |    47271.6   50.71667       47172.2       47371
+inflated_nonwifeinc |   41313.02   48.56879      41217.82    41408.21
+               fage |     32.876   .0090962      32.85817    32.89383
+     fagefirstbirth |   24.31501   .0079491      24.29943    24.33059
+      fworkedforpay |   .9763733   .0002996      .9757862    .9769604
+           fwkswork |   47.88432   .0208917      47.84337    47.92526
+          fuhrswork |   43.42629    .024292      43.37868     43.4739
+  inflated_fincwage |   35495.16   46.55388      35403.92    35586.41
+---------------------------------------------------------------------
+
+. outreg2 using table2, excel stats(mean sd) ctitle(Married couples) append
+table2.xml
+dir : seeout
+
+. 
+. /*Table 7 Instrumental variable spouses*/
+. *column 7*
+. reg fworkedforpay children2more fage fagefirstbirth boy1st boy2nd fblack fotherrace fhispanic if dad==1,r
+
+Linear regression                               Number of obs     =    257,082
+                                                F(8, 257073)      =     150.03
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0100
+                                                Root MSE          =     .15113
+
+--------------------------------------------------------------------------------
+               |               Robust
+ fworkedforpay |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |  -.0083991    .000662   -12.69   0.000    -.0096966   -.0071017
+          fage |   -.001403   .0001033   -13.59   0.000    -.0016054   -.0012006
+fagefirstbirth |  -.0002346   .0001252    -1.87   0.061    -.0004799    .0000108
+        boy1st |   .0002558   .0005965     0.43   0.668    -.0009134    .0014249
+        boy2nd |   .0013519   .0005969     2.26   0.024      .000182    .0025217
+        fblack |  -.0405726   .0019899   -20.39   0.000    -.0444729   -.0366724
+    fotherrace |  -.0359716   .0027767   -12.95   0.000     -.041414   -.0305293
+     fhispanic |   -.037443   .0027542   -13.59   0.000    -.0428412   -.0320449
+         _cons |     1.0349   .0034595   299.15   0.000      1.02812    1.041681
+--------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 7 worked for pay sponse)
+table7.xml
+dir : seeout
+
+. reg fwkswork children2more age agefirstbirth boy1st boy2nd fblack fotherrace fhispanic if dad==1,r
+
+Linear regression                               Number of obs     =    257,082
+                                                F(8, 257073)      =     587.30
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0255
+                                                Root MSE          =     10.457
+
+-------------------------------------------------------------------------------
+              |               Robust
+     fwkswork |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+children2more |  -.7482794    .045306   -16.52   0.000    -.8370779   -.6594809
+          age |   .1453958   .0072591    20.03   0.000     .1311682    .1596234
+agefirstbirth |   .2574718   .0079319    32.46   0.000     .2419256    .2730181
+       boy1st |  -.0392083   .0412681    -0.95   0.342    -.1200928    .0416761
+       boy2nd |   .0683344   .0412832     1.66   0.098    -.0125796    .1492484
+       fblack |  -3.377463   .1235917   -27.33   0.000    -3.619699   -3.135227
+   fotherrace |   -4.02333   .1745481   -23.05   0.000    -4.365439    -3.68122
+    fhispanic |  -3.619236   .1746601   -20.72   0.000    -3.961565   -3.276907
+        _cons |   38.57416   .2210871   174.47   0.000     38.14083    39.00748
+-------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 7 weeks worked sponse)
+table7.xml
+dir : seeout
+
+. reg  fuhrswork children2more fage fagefirstbirth boy1st boy2nd fblack fotherrace fhispanic if dad==1,r
+
+Linear regression                               Number of obs     =    257,082
+                                                F(8, 257073)      =     401.93
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0155
+                                                Root MSE          =     12.221
+
+--------------------------------------------------------------------------------
+               |               Robust
+     fuhrswork |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |   .1271041    .053286     2.39   0.017     .0226649    .2315433
+          fage |  -.0663641   .0077118    -8.61   0.000    -.0814791   -.0512491
+fagefirstbirth |   .0169897   .0090552     1.88   0.061    -.0007582    .0347375
+        boy1st |   -.066326    .048247    -1.37   0.169    -.1608887    .0282368
+        boy2nd |   .0302494    .048242     0.63   0.531    -.0643036    .1248025
+        fblack |  -5.403735   .1178128   -45.87   0.000    -5.634645   -5.172825
+    fotherrace |  -3.288313   .1767307   -18.61   0.000      -3.6347   -2.941926
+     fhispanic |  -4.748672    .164669   -28.84   0.000    -5.071419   -4.425925
+         _cons |   45.69613   .2182925   209.33   0.000     45.26828    46.12397
+--------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 7 hours worked per week sponse)
+table7.xml
+dir : seeout
+
+. reg  inflated_fincwage children2more fage fagefirstbirth boy1st boy2nd fblack fotherrace fhispanic if dad
+> ==1,r
+
+Linear regression                               Number of obs     =    257,082
+                                                F(8, 257073)      =    1180.37
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0313
+                                                Root MSE          =      23233
+
+--------------------------------------------------------------------------------
+               |               Robust
+inflated_fin~e |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |  -2010.378   99.99563   -20.10   0.000    -2206.367   -1814.389
+          fage |    505.851   13.60738    37.17   0.000     479.1809    532.5211
+fagefirstbirth |   221.8533   17.45434    12.71   0.000     187.6432    256.0633
+        boy1st |  -24.28329   91.72475    -0.26   0.791    -204.0613    155.4948
+        boy2nd |   16.98471   91.68686     0.19   0.853    -162.7191    196.6885
+        fblack |  -8844.478   158.0678   -55.95   0.000    -9154.287    -8534.67
+    fotherrace |  -4447.102   321.6352   -13.83   0.000    -5077.498   -3816.705
+     fhispanic |  -10381.36   208.9044   -49.69   0.000    -10790.81   -9971.914
+         _cons |   15147.83     383.76    39.47   0.000     14395.67    15899.99
+--------------------------------------------------------------------------------
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 7 labor income sponse)
+table7.xml
+dir : seeout
+
+. 
+. *column 8*
+. ivregress 2sls fworkedforpay (children2more=samesex) fage fagefirstbirth boy1st boy2nd fhispanic fblack f
+> otherrace if dad==1, r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,082
+                                                  Wald chi2(8)    =    1098.20
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0083
+                                                  Root MSE        =     .15125
+
+--------------------------------------------------------------------------------
+               |               Robust
+ fworkedforpay |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |   .0049764    .008665     0.57   0.566    -.0120067    .0219595
+          fage |  -.0018873   .0003299    -5.72   0.000    -.0025339   -.0012408
+fagefirstbirth |     .00031   .0003735     0.83   0.406    -.0004219     .001042
+        boy1st |    .000394   .0006011     0.66   0.512    -.0007841    .0015721
+        boy2nd |   .0014601   .0006011     2.43   0.015     .0002819    .0026382
+     fhispanic |   -.039791   .0031326   -12.70   0.000    -.0459308   -.0336512
+        fblack |  -.0416051   .0020973   -19.84   0.000    -.0457158   -.0374944
+    fotherrace |   -.037043   .0028783   -12.87   0.000    -.0426844   -.0314016
+         _cons |   1.032556   .0037736   273.63   0.000      1.02516    1.039952
+--------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   fage fagefirstbirth boy1st boy2nd fhispanic fblack fotherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 8 worked for pay sponse)
+table7.xml
+dir : seeout
+
+. ivregress 2sls fwkswork (children2more=samesex) fage fagefirstbirth boy1st boy2nd fhispanic fblack fother
+> race if dad==1,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,082
+                                                  Wald chi2(8)    =    1985.21
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0121
+                                                  Root MSE        =     10.529
+
+--------------------------------------------------------------------------------
+               |               Robust
+      fwkswork |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |   .4178848   .6028085     0.69   0.488    -.7635982    1.599368
+          fage |  -.0448135    .022849    -1.96   0.050    -.0895966   -.0000303
+fagefirstbirth |   .0552347   .0257596     2.14   0.032     .0047468    .1057227
+        boy1st |  -.0239992   .0419157    -0.57   0.567    -.1061524     .058154
+        boy2nd |   .0819024   .0418652     1.96   0.050    -.0001519    .1639567
+     fhispanic |  -4.325634   .2038642   -21.22   0.000    -4.725201   -3.926068
+        fblack |   -3.81677   .1324862   -28.81   0.000    -4.076439   -3.557102
+    fotherrace |  -3.915881   .1840693   -21.27   0.000     -4.27665   -3.555112
+         _cons |   48.27354    .237306   203.42   0.000     47.80843    48.73866
+--------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   fage fagefirstbirth boy1st boy2nd fhispanic fblack fotherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 8 weeks worked sponse)
+table7.xml
+dir : seeout
+
+. ivregress 2sls fuhrswork (children2more=samesex) fage fagefirstbirth boy1st boy2nd fhispanic fblack fothe
+> rrace if dad==1,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,082
+                                                  Wald chi2(8)    =    3205.34
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0151
+                                                  Root MSE        =     12.223
+
+--------------------------------------------------------------------------------
+               |               Robust
+     fuhrswork |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |   .6759988    .699994     0.97   0.334    -.6959643    2.047962
+          fage |  -.0862403   .0264531    -3.26   0.001    -.1380874   -.0343932
+fagefirstbirth |   .0393391   .0298792     1.32   0.188    -.0192231    .0979013
+        boy1st |  -.0606537   .0487133    -1.25   0.213    -.1561301    .0348227
+        boy2nd |   .0346901   .0485105     0.72   0.475    -.0603886    .1297689
+     fhispanic |  -4.845025   .2049783   -23.64   0.000    -5.246775   -4.443275
+        fblack |  -5.446105    .129471   -42.06   0.000    -5.699864   -5.192347
+    fotherrace |  -3.332279   .1857953   -17.94   0.000    -3.696431   -2.968126
+         _cons |   45.59992   .2503862   182.12   0.000     45.10917    46.09067
+--------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   fage fagefirstbirth boy1st boy2nd fhispanic fblack fotherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 8 hours worked per week sponse)
+table7.xml
+dir : seeout
+
+. ivregress 2sls inflated_fincwage (children2more=samesex) fage fagefirstbirth boy1st boy2nd fhispanic fbla
+> ck fotherrace if dad==1, r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,082
+                                                  Wald chi2(8)    =    8892.06
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0301
+                                                  Root MSE        =      23247
+
+--------------------------------------------------------------------------------
+               |               Robust
+inflated_fin~e |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |  -238.7402   1330.905    -0.18   0.858    -2847.266    2369.786
+          fage |   441.6977   50.04591     8.83   0.000     343.6095    539.7859
+fagefirstbirth |   293.9894    56.8361     5.17   0.000     182.5927    405.3861
+        boy1st |  -5.975148   92.77888    -0.06   0.949    -187.8184    175.8681
+        boy2nd |   31.31779   92.23522     0.34   0.734    -149.4599    212.0955
+     fhispanic |  -10692.35    311.788   -34.29   0.000    -11303.45   -10081.26
+        fblack |  -8981.234   188.5478   -47.63   0.000    -9350.781   -8611.687
+    fotherrace |  -4589.007   339.8159   -13.50   0.000    -5255.034    -3922.98
+         _cons |   14837.31   448.1055    33.11   0.000     13959.04    15715.58
+--------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   fage fagefirstbirth boy1st boy2nd fhispanic fblack fotherrace
+               samesex
+
+. outreg2 using table7, excel keep(children2more) ctitle(column 8 labor income sponse)
+table7.xml
+dir : seeout
+
+. 
+. *column 9*
+. ivregress 2sls fworkedforpay (children2more=twoboys twogirls) fage fagefirstbirth boy1st fhispanic fblack
+>  fotherrace if dad==1,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,082
+                                                  Wald chi2(7)    =    1094.36
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0088
+                                                  Root MSE        =     .15121
+
+--------------------------------------------------------------------------------
+               |               Robust
+ fworkedforpay |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |   .0025257   .0086094     0.29   0.769    -.0143484    .0193998
+          fage |  -.0017987   .0003278    -5.49   0.000    -.0024412   -.0011561
+fagefirstbirth |   .0002105   .0003714     0.57   0.571    -.0005175    .0009386
+        boy1st |   .0003839    .000601     0.64   0.523     -.000794    .0015617
+     fhispanic |   -.039362   .0031258   -12.59   0.000    -.0454885   -.0332355
+        fblack |  -.0414274   .0020958   -19.77   0.000    -.0455351   -.0373198
+    fotherrace |  -.0368549   .0028764   -12.81   0.000    -.0424925   -.0312173
+         _cons |   1.033712   .0037505   275.62   0.000     1.026361    1.041063
+--------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   fage fagefirstbirth boy1st fhispanic fblack fotherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  5.90323  (p = 0.0151)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .0151131
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 9 worked for pay sp
+> onse)
+table7.xml
+dir : seeout
+
+. ivregress 2sls fwkswork (children2more=twoboys twogirls) fage fagefirstbirth boy1st fhispanic fblack foth
+> errace if dad==1,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,082
+                                                  Wald chi2(7)    =    1982.59
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0127
+                                                  Root MSE        =     10.525
+
+--------------------------------------------------------------------------------
+               |               Robust
+      fwkswork |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |   .2804147   .5983533     0.47   0.639    -.8923362    1.453166
+          fage |  -.0398386   .0226848    -1.76   0.079       -.0843    .0046227
+fagefirstbirth |   .0496534   .0255865     1.94   0.052    -.0004952     .099802
+        boy1st |  -.0245692    .041903    -0.59   0.558    -.1066976    .0575593
+     fhispanic |  -4.301572   .2033521   -21.15   0.000    -4.700134   -3.903009
+        fblack |  -3.806804   .1323632   -28.76   0.000    -4.066231   -3.547377
+    fotherrace |  -3.905333   .1839196   -21.23   0.000    -4.265809   -3.544858
+         _cons |   48.33842   .2352234   205.50   0.000     47.87739    48.79945
+--------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   fage fagefirstbirth boy1st fhispanic fblack fotherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  3.82981  (p = 0.0503)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .05034862
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 9 weeks worked spon
+> se)
+table7.xml
+dir : seeout
+
+. ivregress 2sls fuhrswork (children2more=twoboys twogirls) fage fagefirstbirth boy1st fhispanic fblack fot
+> herrace if dad==1,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,082
+                                                  Wald chi2(7)    =    3204.93
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0152
+                                                  Root MSE        =     12.223
+
+--------------------------------------------------------------------------------
+               |               Robust
+     fuhrswork |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |   .6177727   .6962238     0.89   0.375    -.7468009    1.982346
+          fage |  -.0841332   .0263188    -3.20   0.001    -.1357171   -.0325493
+fagefirstbirth |   .0369751   .0297319     1.24   0.214    -.0212985    .0952486
+        boy1st |  -.0608951   .0487115    -1.25   0.211    -.1563679    .0345777
+     fhispanic |  -4.834834   .2045946   -23.63   0.000    -5.235831   -4.433836
+        fblack |  -5.441884   .1293826   -42.06   0.000    -5.695469   -5.188299
+    fotherrace |  -3.327811   .1857047   -17.92   0.000    -3.691786   -2.963837
+         _cons |    45.6274   .2476928   184.21   0.000     45.14193    46.11287
+--------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   fage fagefirstbirth boy1st fhispanic fblack fotherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  .511422  (p = 0.4745)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .47452393
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 9 hours worked per 
+> week sponse)
+table7.xml
+dir : seeout
+
+. ivregress 2sls inflated_fincwage (children2more=twoboys twogirls) fage fagefirstbirth boy1st fhispanic fb
+> lack fotherrace if dad==1,r
+
+Instrumental variables (2SLS) regression          Number of obs   =    257,082
+                                                  Wald chi2(7)    =    8893.42
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0301
+                                                  Root MSE        =      23246
+
+--------------------------------------------------------------------------------
+               |               Robust
+inflated_fin~e |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+ children2more |  -291.3059   1323.693    -0.22   0.826    -2885.696    2303.084
+          fage |      443.6   49.79206     8.91   0.000     346.0093    541.1906
+fagefirstbirth |   291.8552   56.55564     5.16   0.000     181.0082    402.7022
+        boy1st |  -6.193101   92.77529    -0.07   0.947    -188.0293    175.6431
+     fhispanic |  -10683.15   310.8328   -34.37   0.000    -11292.37   -10073.93
+        fblack |  -8977.423   188.2048   -47.70   0.000    -9346.297   -8608.548
+    fotherrace |  -4584.974   339.6286   -13.50   0.000    -5250.634   -3919.314
+         _cons |   14862.12    442.582    33.58   0.000     13994.67    15729.56
+--------------------------------------------------------------------------------
+Instrumented:  children2more
+Instruments:   fage fagefirstbirth boy1st fhispanic fblack fotherrace twoboys
+               twogirls
+
+. estat overid
+
+  Test of overidentifying restrictions:
+
+  Score chi2(1)          =  .115298  (p = 0.7342)
+
+. estadd scalar jstat=r(p_score), replace
+
+added scalar:
+              e(jstat) =  .73419158
+
+. outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 9 labor income spon
+> se)
+table7.xml
+dir : seeout
+
+. 
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  /Users/xiangyuren/Documents/AEM 2172/replication exercise.log
+  log type:  text
+ closed on:  15 Dec 2021, 23:29:20
+-----------------------------------------------------------------------------------------------------------
