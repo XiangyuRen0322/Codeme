@@ -31,7 +31,7 @@ save mother, replace
 *Perform merging using serial as unique identifier and momloc as the linkage identifier
 *For each observation in the current dataset (where there should be a unique us80a_serial), there can be multiple matching records in the using dataset (raw pums80 slim.dta).
 *After the merge, a temporary variable _merge is created by Stata that indicates the result of the merge for each observation. 
-*A value of 3 for _merge indicates that the observation was matched in both the master (current dataset in memory) and using datasets. 
+*A value of 3 for _merge indicates that the observation was matched in both the mother dataset and main dataset 
 *This command keeps only those observations that were successfully matched in both datasets and drops all others.
 
 keep us80a_pernum us80a_serial
@@ -53,15 +53,22 @@ bys us80a_serial: gen childrennumber=_n
 reshape wide age sex us80a_birthqtr us80a_qage us80a_qsex us80a_qbirthmo, i(momloc us80a_serial) j(childrennumber)
 *Keep the variables we will use to filter and clean the children subset
 keep us80a_serial momloc age1 sex1 us80a_birthqtr1 us80a_qage1 us80a_qsex1 us80a_qbirthmo1 age2 sex2 us80a_birthqtr2 us80a_qage2 us80a_qsex2 us80a_qbirthmo2 age3 sex3 us80a_birthqtr3 
-*
+*We need to further restrict the children subset
+*Keep children less than 18 years old and larger than 1 year old
+*Keep the household observations with more than one child
 drop if age1>=18 | age2<1 
 drop if age2==. | sex2==. 
+*Rename the momloc to pernum that indicating the person number of mother to match the variable name in the mother sample
 rename momloc us80a_pernum
+*Save children sample locally
 save children, replace
 
-*merge children sample to mom sample*
+*Merge children sample to mom sample*
+*Perform merging using serial as unique identifier and momloc as the linkage identifier
+*Only keep the observations that were matched in both the children sample and mother sample 
 merge 1:m us80a_serial us80a_pernum using "mother.dta"
 keep if _merge==3 & us80a_qage1==0 & us80a_qage2==0 & us80a_qsex1==0 & us80a_qsex2==0 & us80a_qbirthmo1==0 & us80a_qbirthmo2==0
+*Save the dataset in a new local file called subsample
 save subsample, replace
 
 *generate covariates*
