@@ -39,12 +39,21 @@ rename us80a_pernum momloc
 merge 1:m us80a_serial momloc using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta"
 keep if _merge==3
 
-*generate children sample*
+*Generate children sample*
+*Keep variables that we will use to generate children subset
 keep age sex us80a_serial momloc us80a_birthqtr us80a_qage us80a_qsex us80a_qbirthmo
+*The dataset is sorted first in ascending order based on the variable us80a_serial
+*Within each level of us80a_serial, it is sorted in descending order based on the variable age
 gsort us80a_serial -age
+*Creates a variable (childrennumber) that represents the order of observations within each group defined by us80a_serial
 bys us80a_serial: gen childrennumber=_n 
+*Reshape the dataset into wide format, and the variables specified will be spread across columns
+*The combination of momloc and us80a_serial will be used to uniquely identify each group
+*The values of childrennumber will represent the indices of the wide-format variables
 reshape wide age sex us80a_birthqtr us80a_qage us80a_qsex us80a_qbirthmo, i(momloc us80a_serial) j(childrennumber)
+*Keep the variables we will use to filter and clean the children subset
 keep us80a_serial momloc age1 sex1 us80a_birthqtr1 us80a_qage1 us80a_qsex1 us80a_qbirthmo1 age2 sex2 us80a_birthqtr2 us80a_qage2 us80a_qsex2 us80a_qbirthmo2 age3 sex3 us80a_birthqtr3 
+*
 drop if age1>=18 | age2<1 
 drop if age2==. | sex2==. 
 rename momloc us80a_pernum
