@@ -184,7 +184,10 @@ reg lnfamilyinc children2more age agefirstbirth boy1st boy2nd black otherrace hi
 outreg2 using table7, excel keep(children2more) ctitle(column 1 ln-family income all women) append
 
 *column 2*
-*IV
+*Instrumental variable regression
+*The variable samesex is used as an instrument to address potential endogeneity in the relationship between children2more and workedforpay
+*The 2SLS method involves two stages: in the first stage, children2more is regressed on samesex
+*In the second stage, the predicted values from the first stage are used as an instrument in the regression of workedforpay on the other exogenous variables 
 ivregress 2sls workedforpay (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherrace, r
 outreg2 using table7, excel keep(children2more) ctitle(column 2 worked for pay all women) append
 ivregress 2sls us80a_wkswork1 (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherrace, r
