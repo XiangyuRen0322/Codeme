@@ -1,3 +1,8 @@
+*This code attempts to replicate Angrist-Evans's classic labor economics' paper on exploring the effects of having additional children on female labor force participation and earnings.
+*The data used in this replication exercise is the micro census data for the US from IPUMS.
+*The research strategy used in Angrist-Evan's paper is to create an instrumental variable, which is the gender mix of the first two children, for having a third child.
+*If parents prefer to have children with mixed gender, having two boys or two girls might inclease their likelihood to have third children.
+
 clear all
 prog drop _all
 capture log close
