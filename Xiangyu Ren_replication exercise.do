@@ -154,10 +154,11 @@ replace hispanic=0 if hispanic==.
 save replication, replace
 
 /*Part II: Data analysis*/
-/*table 2 mean first column all women*/
+/*table 2 calculate mean values for the variables of interest for all women sample*/
 mean chborn children2more boy1st boy2nd twoboys twogirls samesex twin age agefirstbirth workedforpay us80a_wkswork1 us80a_uhrswork inflated_incwage inflated_ftotinc
 outreg2 using table2, excel stats(mean se) ctitle(All Women) replace
-/*table 6 OLS regression for all women*/
+/*table 6 OLS  conduct regression analysis for all women sample*/
+*regress the dependent variable indicating whether the woman has more than 2 children on the independent variable windicating whether the first two children are in same sex
 reg children2more samesex, r
 outreg2 using table6, excel ctitle(OLS_More than 2 children) replace
 reg children2more boy1st boy2nd samesex age agefirstbirth black otherrace hispanic, r
