@@ -13,7 +13,10 @@ use "/Users/raw pums80 slim.dta", clear
 cd "/Users"
 
 /*Preparation of data*/
-*generate mom sample*
+*Generate mom sample*
+*Create and select mother sample who had more than 3 children, age between 21 and 35, are female
+*Clean the data to make sure number of children of the mother is equal to children borned by the mother minus 1.
+*Save the data locally
 gen mom=.
 replace mom=1 if (us80a_chborn>=3 & us80a_nchild==us80a_chborn-1 & age<=35 & age>=21 & sex==2)
 replace mom=0 if mom==.
@@ -21,6 +24,16 @@ keep if mom==1
 save mother, replace
 
 *merge mom sample to main sample*
+*In the mother sample, only keep the variable indicating number of persons in the household and the unique identifier of the household (serial)
+*The momloc variable indicating whether or not the person's mother lived in the same household and, if so, gives the person number of the mother
+*In the mother sample, as long as we select all mothers, the momloc variable has already indicated the person number of the mother
+*Therefore, in the mother sample, rename pernum variable to momloc
+*Perform merging using serial as unique identifier and momloc as the linkage identifier
+*For each observation in the current dataset (where there should be a unique us80a_serial), there can be multiple matching records in the using dataset (raw pums80 slim.dta).
+*After the merge, a temporary variable _merge is created by Stata that indicates the result of the merge for each observation. 
+*A value of 3 for _merge indicates that the observation was matched in both the master (current dataset in memory) and using datasets. 
+*This command keeps only those observations that were successfully matched in both datasets and drops all others.
+
 keep us80a_pernum us80a_serial
 rename us80a_pernum momloc
 merge 1:m us80a_serial momloc using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta"
