@@ -12,7 +12,7 @@ log using "/Users/replication exercise.log", replace
 use "/Users/raw pums80 slim.dta", clear 
 cd "/Users"
 
-/*Preparation of data*/
+/*Part I: Preparation of data*/
 *Generate mom sample*
 *Create and select mother sample who had more than 3 children, age between 21 and 35, are female
 *Clean the data to make sure number of children of the mother is equal to children borned by the mother minus 1.
@@ -153,7 +153,7 @@ gen hispanic=1 if us80a_race==2
 replace hispanic=0 if hispanic==.
 save replication, replace
 
-/*Part I*/
+/*Part II: Data analysis*/
 /*table 2 mean first column all women*/
 mean chborn children2more boy1st boy2nd twoboys twogirls samesex twin age agefirstbirth workedforpay us80a_wkswork1 us80a_uhrswork inflated_incwage inflated_ftotinc
 outreg2 using table2, excel stats(mean se) ctitle(All Women) replace
