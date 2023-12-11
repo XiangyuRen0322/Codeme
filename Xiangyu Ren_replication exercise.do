@@ -71,26 +71,32 @@ keep if _merge==3 & us80a_qage1==0 & us80a_qage2==0 & us80a_qsex1==0 & us80a_qse
 *Save the dataset in a new local file called subsample
 save subsample, replace
 
-*generate covariates*
+*Generate covariates*
+*Generate number of children borned equal to the original number of children borned-1
 gen chborn=us80a_chborn-1
 
+*Rescale the birth quarter to a scale from 0 to 1
 gen birthqtr1=0 if us80a_birthqtr1==1
 replace birthqtr1=0.25 if us80a_birthqtr1==2
 replace birthqtr1=0.5 if us80a_birthqtr1==3
 replace birthqtr1=0.75 if us80a_birthqtr1==4
 
+*Rescale the marriage quarter to a scale from 0 to 1
 gen marrqtr=0 if us80a_marrqtr==1
 replace marrqtr=0.25 if us80a_marrqtr==2
 replace marrqtr=0.5 if us80a_marrqtr==3
 replace marrqtr=0.75 if us80a_marrqtr==4
 
+*Generate a variable indicating a family has two more children by selecting number of children>=3
 gen children2more=1 if (us80a_nchild>=3)
 replace children2more=0 if (us80a_nchild<3)
 
+*Generate a variable indicating the first born child is a boy
 gen boy1st=.
 replace boy1st=1 if sex1==1
 replace boy1st=0 if boy1st==.
 
+*Generate a variable indicating the second born child is a boy
 gen boy2nd=.
 replace boy2nd=1 if sex2==1
 replace boy2nd=0 if boy2nd==.
