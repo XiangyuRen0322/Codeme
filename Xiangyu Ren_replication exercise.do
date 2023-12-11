@@ -157,17 +157,20 @@ save replication, replace
 /*table 2 calculate mean values for the variables of interest for all women sample*/
 mean chborn children2more boy1st boy2nd twoboys twogirls samesex twin age agefirstbirth workedforpay us80a_wkswork1 us80a_uhrswork inflated_incwage inflated_ftotinc
 outreg2 using table2, excel stats(mean se) ctitle(All Women) replace
-/*table 6 OLS  conduct regression analysis for all women sample*/
-*regress the dependent variable indicating whether the woman has more than 2 children on the independent variable windicating whether the first two children are in same sex
+/*table 6 conduct OLS regression analysis for all women sample*/
+*regress the dependent variable indicating whether the woman has more than 2 children on the independent variable indicating whether the first two children are in same sex
 reg children2more samesex, r
 outreg2 using table6, excel ctitle(OLS_More than 2 children) replace
+*regress the dependent variable indicating whether the woman has more than 2 children on multiple independent variables and append to the original regresion table 
 reg children2more boy1st boy2nd samesex age agefirstbirth black otherrace hispanic, r
 outreg2 using table6, excel keep(boy1st boy2nd samesex) ctitle(OLS_More than 2 children) append
+*regress the dependent variable indicating whether the woman has more than 2 children on multiple independent variables and append to the original regresion table
 reg children2more boy1st twoboys twogirls age agefirstbirth black otherrace hispanic, r
 outreg2 using table6, excel keep(boy1st twoboys twogirls) ctitle(OLS_More than 2 children) append
 
-/*Table 7 instrumental variable for all wome */
+/*Table 7 conduct regression analysis using instrumental variable for all women sample */
 *column 1*
+*Original OLS regression
 reg workedforpay children2more age agefirstbirth boy1st boy2nd black otherrace hispanic, r
 outreg2 using table7, excel keep(children2more) ctitle(column 1 worked for pay all women) replace
 reg us80a_wkswork1 children2more age agefirstbirth boy1st boy2nd black otherrace hispanic, r
@@ -181,6 +184,7 @@ reg lnfamilyinc children2more age agefirstbirth boy1st boy2nd black otherrace hi
 outreg2 using table7, excel keep(children2more) ctitle(column 1 ln-family income all women) append
 
 *column 2*
+*IV
 ivregress 2sls workedforpay (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherrace, r
 outreg2 using table7, excel keep(children2more) ctitle(column 2 worked for pay all women) append
 ivregress 2sls us80a_wkswork1 (children2more=samesex) age agefirstbirth boy1st boy2nd hispanic black otherrace, r
@@ -214,8 +218,8 @@ estat overid
 estadd scalar jstat=r(p_score), replace
 outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 3 ln-family income all women) append
 
-/*Part II*/
-/*maried women*/
+/*Part III: Data analysis using married women sample*/
+/*married women*/
 keep if us80a_agemarr+marrqtr<=agefirstbirth+birthqtr1 & us80a_marrno==1 
 keep if us80a_marst==1 | us80a_marst==2
 drop _merge
@@ -286,7 +290,7 @@ estadd scalar jstat=r(p_score), replace
 outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 6 ln-non wife income married women) append
 
 
-/*Part III*/
+/*Part IV*/
 /*Table 2 mean second column for married women and spouse*/
 *generate spouse sample*
 use Mainsample, replace
