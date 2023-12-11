@@ -101,43 +101,54 @@ gen boy2nd=.
 replace boy2nd=1 if sex2==1
 replace boy2nd=0 if boy2nd==.
 
+*Generate a variable indicating the both the first born and second born children are boys
 gen twoboys=.
 replace twoboys=1 if (sex1==1 & sex2==1)
 replace twoboys=0 if twoboys==.
 
+*Generate a variable indicating the both the first born and second born children are girls
 gen twogirls=.
 replace twogirls=1 if (sex1==2 & sex2==2)
 replace twogirls=0 if twogirls==.
 
+*Generate a variable indicating the both the first born and second born children have same sex
 gen samesex=.
 replace samesex=1 if (sex1==sex2)
 replace samesex=0 if samesex==.
 
+*Generate a variable indicating the the first born and second born are twins
 gen twin=.
 replace twin=1 if (age2==age3 & us80a_birthqtr2==us80a_birthqtr3)
 replace twin=0 if twin==.
 
+*Generate a variable indicating if the person worked
 gen workedforpay=.
 replace workedforpay=1 if us80a_wkswork1>0
 replace workedforpay=0 if workedforpay==.
 
-
+*Adjust the family income and wife income variables by inflation
 gen inflated_incwage=(us80a_incwage*2.099173554) 
 gen inflated_ftotinc=(us80a_ftotinc*2.099173554)
+*Calculate non-wife income by minusing wife income wage from the total family income
 gen nonwifeincome= us80a_ftotinc-us80a_incwage
 gen inflated_nonwifeinc=(nonwifeincome*2.099173554)
+*Calculate the age of the first time having children by using mom's age minus age of first born child
 gen agefirstbirth=age-age1
 
+*Replace null values with 0 for several variables 
 replace inflated_incwage=0 if inflated_incwage==.
 replace inflated_ftotinc=0 if inflated_ftotinc==.
 replace inflated_nonwifeinc=0 if inflated_nonwifeinc==.
 
+*Generate black race indicator 
 gen black=1 if us80a_race==3
 replace black=0 if black==.
 
+*Generate other race indicator
 gen otherrace=1 if us80a_race !=1 & us80a_race!=2 & us80a_race!=3
 replace otherrace=0 if otherrace==.
 
+*Generate hispanic race indicator
 gen hispanic=1 if us80a_race==2
 replace hispanic=0 if hispanic==.
 save replication, replace
