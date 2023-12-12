@@ -17,10 +17,9 @@ cd "/Users"
 *Create and select mother sample who had more than 3 children, age between 21 and 35, are female
 *Clean the data to make sure number of children of the mother is equal to children borned by the mother minus 1.
 *Save the data locally
-gen mom=.
-replace mom=1 if (us80a_chborn>=3 & us80a_nchild==us80a_chborn-1 & age<=35 & age>=21 & sex==2)
-replace mom=0 if mom==.
-keep if mom==1
+gen mom = (us80a_chborn >= 3 & us80a_nchild == us80a_chborn - 1 & age <= 35 & age >= 21 & sex == 2) if !missing(us80a_chborn, us80a_nchild, age, sex)
+* Keep only the observations where mom is 1
+keep if mom == 1
 save mother, replace
 
 *merge mom sample to main sample*
