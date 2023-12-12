@@ -36,8 +36,7 @@ save mother, replace
 
 keep us80a_pernum us80a_serial
 rename us80a_pernum momloc
-merge 1:m us80a_serial momloc using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta"
-keep if _merge==3
+merge 1:m us80a_serial momloc using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta" ,keep(match)
 
 *Generate children sample*
 *Keep variables that we will use to generate children subset
