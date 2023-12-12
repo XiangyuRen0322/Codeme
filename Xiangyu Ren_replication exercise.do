@@ -200,8 +200,15 @@ ivregress 2sls lnfamilyinc (children2more=samesex) age agefirstbirth boy1st boy2
 outreg2 using table7, excel keep(children2more) ctitle(column 2 ln-family income all women) append
 
 *column 3*
+*This part specifies the IV regression. It uses workedforpay as the dependent variable and includes age, agefirstbirth, boy1st, hispanic, black, otherrace as regressors. 
+*The instrumental variable for the endogenous variable children2more is provided by the variables twoboys and twogirls. 
+*The r option requests additional statistics, and the estat overid command afterward checks for over-identification restrictions.
 ivregress 2sls workedforpay (children2more=twogirls twoboys) age agefirstbirth boy1st hispanic black otherrace, r
+*checks for over-identification restrictions, which is relevant in IV regression. 
+*Over-identification tests assess whether there are too many instruments (more than necessary for the number of endogenous regressors) and can help diagnose potential problems with the instrument variables.
 estat overid
+*The following command adds a scalar named jstat to the estimation results. 
+*The scalar value is set equal to the p-value from the Sargan-Hansen J test of over-identifying restrictions.
 estadd scalar jstat=r(p_score), replace
 outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 3 worked for pay all women) append
 ivregress 2sls us80a_wkswork1 (children2more=twogirls twoboys) age agefirstbirth boy1st hispanic black otherrace,r 
@@ -223,12 +230,18 @@ outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(c
 
 /*Part III: Data analysis using married women sample*/
 /*married women*/
+*Clean and select sample married women by keeping samples whose married ages are smaller than the ages of giving first birth and keeping the samples who only married once
 keep if us80a_agemarr+marrqtr<=agefirstbirth+birthqtr1 & us80a_marrno==1 
+*Keep samples who are married with or without spouses present
 keep if us80a_marst==1 | us80a_marst==2
+*Drop the _merge variable
 drop _merge
+*Save the Mainsample
 save Mainsample, replace
 
+*The regression analysis presented in Tables 6 and 7 is a repetition of the analysis conducted on the entire women sample
 /*Table 6 OLS regression married women*/
+
 reg children2more samesex, r
 outreg2 using table6,excel ctitle(OLS_More than 2 children) append
 reg children2more boy1st boy2nd samesex age agefirstbirth black otherrace hispanic, r
@@ -293,14 +306,17 @@ estadd scalar jstat=r(p_score), replace
 outreg2 using table7, excel stats(coef se) e(jstat) keep(children2more) ctitle(column 6 ln-non wife income married women) append
 
 
-/*Part IV*/
+/*Part IV: Data analysis using married women and spouse sample*/
 /*Table 2 mean second column for married women and spouse*/
 *generate spouse sample*
+*Keep sponse person number and household serial number in the main dataset and rename spouse person number to pernum
 use Mainsample, replace
 keep us80a_sploc us80a_serial
 rename us80a_sploc us80a_pernum
+*Merge spouse sample to the main sample and only keep matched values
 merge 1:m us80a_pernum us80a_serial using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta"
 keep if _merge==3
+*Generate dad identifier if the observations are in the matched samples
 gen dad=1 if _merge==3
 replace dad=0 if dad==.
 save dad, replace
@@ -317,10 +333,14 @@ save dadwchild, replace
 
 
 *generate covariates* 
+*Generate a variable indicating if father worked
 gen fworkedforpay=1 if fwkswork>0
 replace fworkedforpay=0 if fworkedforpay==.
+*Generate inflated father's income
 gen inflated_fincwage=(fincwage*2.099173554)
+*Generate a variable indicating father's age when the first child born
 gen fagefirstbirth=fage-age1
+*Generate father race dummies
 gen fblack=1 if frace==3
 replace fblack=0 if fblack==.
 gen fhispanic=1 if frace==2
@@ -332,6 +352,7 @@ save family, replace
 mean chborn children2more boy1st boy2nd twoboys twogirls samesex twin age agefirstbirth workedforpay us80a_wkswork1 us80a_uhrswork inflated_incwage inflated_ftotinc inflated_nonwifeinc fage fagefirstbirth fworkedforpay fwkswork fuhrswork inflated_fincwage
 outreg2 using table2, excel stats(mean sd) ctitle(Married couples) append
 
+*The regression analysis presented in Tables 6 and 7 is a repetition of the analysis conducted on the entire women sample and married women sample
 /*Table 7 Instrumental variable spouses*/
 *column 7*
 reg fworkedforpay children2more fage fagefirstbirth boy1st boy2nd fblack fotherrace fhispanic if dad==1,r
