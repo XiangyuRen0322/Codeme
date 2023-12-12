@@ -81,10 +81,12 @@ gen birthqtr1 = cond(us80a_birthqtr1 == 1, 0, ///
 
 
 *Rescale the marriage quarter to a scale from 0 to 1
-gen marrqtr=0 if us80a_marrqtr==1
-replace marrqtr=0.25 if us80a_marrqtr==2
-replace marrqtr=0.5 if us80a_marrqtr==3
-replace marrqtr=0.75 if us80a_marrqtr==4
+*Generate marrqtr based on us80a_marrqtr using the cond() function
+gen marrqtr = cond(us80a_marrqtr == 1, 0, ///
+                   cond(us80a_marrqtr == 2, 0.25, ///
+                   cond(us80a_marrqtr == 3, 0.5, ///
+                   cond(us80a_marrqtr == 4, 0.75, .))))
+
 
 *Generate a variable indicating a family has two more children by selecting number of children>=3
 gen children2more=1 if (us80a_nchild>=3)
