@@ -74,10 +74,11 @@ save subsample, replace
 gen chborn=us80a_chborn-1
 
 *Rescale the birth quarter to a scale from 0 to 1
-gen birthqtr1=0 if us80a_birthqtr1==1
-replace birthqtr1=0.25 if us80a_birthqtr1==2
-replace birthqtr1=0.5 if us80a_birthqtr1==3
-replace birthqtr1=0.75 if us80a_birthqtr1==4
+gen birthqtr1 = cond(us80a_birthqtr1 == 1, 0, ///
+                     cond(us80a_birthqtr1 == 2, 0.25, ///
+                     cond(us80a_birthqtr1 == 3, 0.5, ///
+                     cond(us80a_birthqtr1 == 4, 0.75, .))))
+
 
 *Rescale the marriage quarter to a scale from 0 to 1
 gen marrqtr=0 if us80a_marrqtr==1
