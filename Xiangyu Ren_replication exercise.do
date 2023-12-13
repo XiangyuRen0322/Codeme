@@ -93,39 +93,25 @@ gen children2more=1 if (us80a_nchild>=3)
 replace children2more=0 if (us80a_nchild<3)
 
 *Generate a variable indicating the first born child is a boy
-gen boy1st=.
-replace boy1st=1 if sex1==1
-replace boy1st=0 if boy1st==.
+gen boy1st= (sex1 == 1)
 
 *Generate a variable indicating the second born child is a boy
-gen boy2nd=.
-replace boy2nd=1 if sex2==1
-replace boy2nd=0 if boy2nd==.
+gen boy2nd = (sex2 == 1 & boy2nd == .)
 
 *Generate a variable indicating the both the first born and second born children are boys
-gen twoboys=.
-replace twoboys=1 if (sex1==1 & sex2==1)
-replace twoboys=0 if twoboys==.
+gen twoboys = (sex1 == 1 & sex2 == 1)
 
 *Generate a variable indicating the both the first born and second born children are girls
-gen twogirls=.
-replace twogirls=1 if (sex1==2 & sex2==2)
-replace twogirls=0 if twogirls==.
+gen twogirls = (sex1==2 & sex2==2)
 
 *Generate a variable indicating the both the first born and second born children have same sex
-gen samesex=.
-replace samesex=1 if (sex1==sex2)
-replace samesex=0 if samesex==.
+gen samesex = (sex1==sex2)
 
 *Generate a variable indicating the the first born and second born are twins
-gen twin=.
-replace twin=1 if (age2==age3 & us80a_birthqtr2==us80a_birthqtr3)
-replace twin=0 if twin==.
+gen twin= (age2==age3 & us80a_birthqtr2==us80a_birthqtr3)
 
 *Generate a variable indicating if the person worked
-gen workedforpay=.
-replace workedforpay=1 if us80a_wkswork1>0
-replace workedforpay=0 if workedforpay==.
+gen workedforpay= (us80a_wkswork1>0)
 
 *Adjust the family income and wife income variables by inflation
 gen inflated_incwage=(us80a_incwage*2.099173554) 
@@ -142,17 +128,15 @@ replace inflated_ftotinc=0 if inflated_ftotinc==.
 replace inflated_nonwifeinc=0 if inflated_nonwifeinc==.
 
 *Generate black race indicator 
-gen black=1 if us80a_race==3
-replace black=0 if black==.
+gen black = (us80a_race==3)
+
 
 *Generate other race indicator
-gen otherrace=1 if us80a_race !=1 & us80a_race!=2 & us80a_race!=3
-replace otherrace=0 if otherrace==.
+gen otherrace = (us80a_race !=1 & us80a_race!=2 & us80a_race!=3)
 
 *Generate hispanic race indicator
-gen hispanic=1 if us80a_race==2
-replace hispanic=0 if hispanic==.
-save replication, replace
+gen hispanic= (us80a_race==2)
+
 
 /*Part II: Data analysis*/
 /*table 2 calculate mean values for the variables of interest for all women sample*/
@@ -315,11 +299,9 @@ use Mainsample, replace
 keep us80a_sploc us80a_serial
 rename us80a_sploc us80a_pernum
 *Merge spouse sample to the main sample and only keep matched values
-merge 1:m us80a_pernum us80a_serial using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta"
-keep if _merge==3
+merge 1:m us80a_pernum us80a_serial using "/Users/xiangyuren/Documents/AEM 2172/raw pums80 slim.dta", keep(match)
 *Generate dad identifier if the observations are in the matched samples
-gen dad=1 if _merge==3
-replace dad=0 if dad==.
+gen dad=  (_merge==3)
 save dad, replace
 *merge spouse sample with children sample*
 drop _merge us80a_sploc
@@ -342,12 +324,9 @@ gen inflated_fincwage=(fincwage*2.099173554)
 *Generate a variable indicating father's age when the first child born
 gen fagefirstbirth=fage-age1
 *Generate father race dummies
-gen fblack=1 if frace==3
-replace fblack=0 if fblack==.
-gen fhispanic=1 if frace==2
-replace fhispanic=0 if fhispanic==.
-gen fotherrace=1 if frace!=1 & frace!=2 & frace!=3
-replace fotherrace=0 if fotherrace==.
+gen fblack = (frace==3)
+gen fhispanic= (frace==2)
+gen fotherrace = (frace!=1 & frace!=2 & frace!=3)
 save family, replace
 
 mean chborn children2more boy1st boy2nd twoboys twogirls samesex twin age agefirstbirth workedforpay us80a_wkswork1 us80a_uhrswork inflated_incwage inflated_ftotinc inflated_nonwifeinc fage fagefirstbirth fworkedforpay fwkswork fuhrswork inflated_fincwage
