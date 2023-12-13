@@ -89,8 +89,7 @@ gen marrqtr = cond(us80a_marrqtr == 1, 0, ///
 
 
 *Generate a variable indicating a family has two more children by selecting number of children>=3
-gen children2more=1 if (us80a_nchild>=3)
-replace children2more=0 if (us80a_nchild<3)
+gen children2more = (us80a_nchild>=3)
 
 *Generate a variable indicating the first born child is a boy
 gen boy1st= (sex1 == 1)
